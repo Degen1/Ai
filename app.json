@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ai",
+    "name": "Aura AI",
     "slug": "ai",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -28,9 +28,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#F8F7F3"
         }
       ]
     ],
