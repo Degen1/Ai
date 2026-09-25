@@ -1,10 +1,8 @@
 import { View } from 'react-native';
 
 import { Radius } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 
-export function AuraMark({ size = 44 }: { size?: number }) {
-  const theme = useTheme();
+export function SaraMark({ size = 44 }: { size?: number }) {
   const innerSize = Math.round(size * 0.42);
 
   return (
@@ -17,7 +15,7 @@ export function AuraMark({ size = 44 }: { size?: number }) {
         borderRadius: Radius.full,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: theme.accentStrong,
+        backgroundColor: '#2878F0',
       }}>
       <View
         style={{
@@ -25,7 +23,7 @@ export function AuraMark({ size = 44 }: { size?: number }) {
           height: innerSize,
           borderRadius: Radius.sm,
           borderCurve: 'continuous',
-          backgroundColor: theme.accentText,
+          backgroundColor: '#FFFFFF',
           transform: [{ rotate: '45deg' }],
         }}
       />

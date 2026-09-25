@@ -2,6 +2,7 @@ import { Host } from '@expo/ui';
 import { Picker, Text } from '@expo/ui/swift-ui';
 import {
   accessibilityLabel,
+  controlSize,
   frame,
   glassEffect,
   pickerStyle,
@@ -33,8 +34,8 @@ export function ModeSwitcher({
       <AdaptiveGlass
         strong
         style={{
-          width: 178,
-          height: 52,
+          width: 190,
+          height: 60,
           padding: 4,
           flexDirection: 'row',
           borderRadius: Radius.full,
@@ -52,7 +53,7 @@ export function ModeSwitcher({
               onPress={() => onChange(item)}
               style={({ pressed }) => ({
                 flex: 1,
-                height: 42,
+                height: 50,
                 alignItems: 'center',
                 justifyContent: 'center',
                 borderRadius: Radius.full,
@@ -60,7 +61,7 @@ export function ModeSwitcher({
                 opacity: pressed ? 0.65 : 1,
               })}>
               <ThemedText type="label" themeColor={selected ? 'text' : 'textSecondary'}>
-                {item === 'chat' ? 'Chat' : 'Work'}
+                {item === 'chat' ? 'ዕላል' : 'ስራሕ'}
               </ThemedText>
             </Pressable>
           );
@@ -73,24 +74,25 @@ export function ModeSwitcher({
     <Host
       colorScheme={colorScheme === 'dark' ? 'dark' : 'light'}
       ignoreSafeArea="all"
-      style={{ width: 178, height: 52 }}>
+      style={{ width: 190, height: 60 }}>
       <Picker
         label=""
         modifiers={[
           pickerStyle('segmented'),
+          controlSize('large'),
           glassEffect({
             glass: { variant: 'regular', interactive: true },
             shape: 'capsule',
           }),
-          frame({ width: 178, height: 52 }),
-          accessibilityLabel('Conversation mode'),
+          frame({ width: 190, height: 60 }),
+          accessibilityLabel('ዓይነት ዕላል'),
         ]}
         onSelectionChange={(selection) => {
           if (selection === 'chat' || selection === 'work') onChange(selection);
         }}
         selection={mode}>
-        <Text modifiers={[tag('chat')]}>Chat</Text>
-        <Text modifiers={[tag('work')]}>Work</Text>
+        <Text modifiers={[tag('chat')]}>ዕላል</Text>
+        <Text modifiers={[tag('work')]}>ስራሕ</Text>
       </Picker>
     </Host>
   );

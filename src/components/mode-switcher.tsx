@@ -20,8 +20,8 @@ export function ModeSwitcher({
     <AdaptiveGlass
       strong
       style={{
-        width: 170,
-        height: 50,
+        width: 190,
+        height: 60,
         padding: 4,
         flexDirection: 'row',
         borderRadius: Radius.full,
@@ -39,15 +39,18 @@ export function ModeSwitcher({
             onPress={() => onChange(item)}
             style={({ pressed }) => ({
               flex: 1,
-              height: 40,
+              alignSelf: 'stretch',
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: Radius.full,
               backgroundColor: selected ? theme.backgroundSelected : 'transparent',
               opacity: pressed ? 0.65 : 1,
             })}>
-            <ThemedText type="label" themeColor={selected ? 'text' : 'textSecondary'}>
-              {item === 'chat' ? 'Chat' : 'Work'}
+            <ThemedText
+              type="label"
+              themeColor={selected ? 'text' : 'textSecondary'}
+              style={{ fontSize: 16, lineHeight: 22 }}>
+              {item === 'chat' ? 'ዕላል' : 'ስራሕ'}
             </ThemedText>
           </Pressable>
         );
