@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Aura AI",
+    "name": "Sara",
     "slug": "ai",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,7 +8,11 @@
     "scheme": "ai",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "icon": "./assets/expo.icon"
+      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.degengebre.ai",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -30,11 +34,23 @@
         {
           "backgroundColor": "#F8F7F3"
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "8ab79247-6531-4d03-bfdc-389b3c09479a"
+      }
     }
   }
 }

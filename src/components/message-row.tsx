@@ -1,6 +1,7 @@
+import { Image } from 'expo-image';
 import { View } from 'react-native';
 
-import { AuraMark } from '@/components/aura-mark';
+import { SaraMark } from '@/components/sara-mark';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -19,17 +20,30 @@ export function MessageRow({ message }: { message: ChatMessage }) {
           alignItems: 'flex-end',
           paddingHorizontal: Spacing.md,
         }}>
-        <View
-          style={{
-            maxWidth: '86%',
-            paddingHorizontal: Spacing.md,
-            paddingVertical: Spacing.twoHalf,
-            borderRadius: Radius.full,
-            backgroundColor: theme.backgroundElement,
-          }}>
-          <ThemedText type="body" selectable>
-            {message.content}
-          </ThemedText>
+        <View style={{ alignItems: 'flex-end', gap: Spacing.xs, maxWidth: '86%' }}>
+          {message.images?.length ? (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'flex-end', gap: Spacing.xs }}>
+              {message.images.map((image) => (
+                <Image
+                  key={image.id}
+                  accessibilityLabel="ዝተሰደደ ስእሊ"
+                  source={{ uri: image.uri }}
+                  style={{ width: 116, height: 116, borderRadius: Radius.md }}
+                />
+              ))}
+            </View>
+          ) : null}
+          <View
+            style={{
+              paddingHorizontal: Spacing.md,
+              paddingVertical: Spacing.twoHalf,
+              borderRadius: Radius.full,
+              backgroundColor: theme.backgroundElement,
+            }}>
+            <ThemedText type="body" selectable>
+              {message.content}
+            </ThemedText>
+          </View>
         </View>
       </View>
     );
@@ -46,9 +60,9 @@ export function MessageRow({ message }: { message: ChatMessage }) {
         gap: Spacing.twoHalf,
         paddingHorizontal: Spacing.md,
       }}>
-      <AuraMark size={30} />
+      <SaraMark size={30} />
       <View style={{ flex: 1, paddingTop: 2, gap: Spacing.sm }}>
-        <ThemedText type="label">Aura</ThemedText>
+        <ThemedText type="label">ሳራ</ThemedText>
         <ThemedText type="body" selectable>
           {message.content}
         </ThemedText>

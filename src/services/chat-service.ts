@@ -1,37 +1,77 @@
 import type { ChatMessage } from '@/data/chat-data';
+import { imageDataUrl } from '@/data/chat-images';
+
+export type ChatMode = 'chat' | 'work';
 
 export interface ChatTransport {
-  send(messages: ChatMessage[]): Promise<string>;
+  send(messages: ChatMessage[], mode: ChatMode): Promise<string>;
 }
 
-const pause = (duration: number) => new Promise((resolve) => setTimeout(resolve, duration));
-
-function createLocalReply(prompt: string) {
-  const normalized = prompt.toLowerCase();
-
-  if (normalized.includes('week') || normalized.includes('plan')) {
-    return 'Let’s make it manageable. Pick one outcome that would make the week feel successful, then choose three small priorities for each day. Protect one block for deep work, one for admin, and leave breathing room for the unexpected.';
-  }
-
-  if (normalized.includes('write') || normalized.includes('draft')) {
-    return 'Absolutely. Start with the point your reader needs first, keep the middle to two or three concrete details, and end with a clear next step. Share the audience and rough notes, and I’ll shape the full draft.';
-  }
-
-  if (normalized.includes('app') || normalized.includes('idea') || normalized.includes('build')) {
-    return 'A strong first version should do one job unusually well. Define the user, the moment they open the app, and the single result they should get. Then build only the shortest path between those three things.';
-  }
-
-  if (normalized.includes('learn') || normalized.includes('teach') || normalized.includes('explain')) {
-    return 'Here’s a useful idea: systems beat goals when the work repeats. A goal names the destination; a system defines what you do today. Make the next action obvious, small, and easy to repeat, then improve it from real feedback.';
-  }
-
-  return 'I’m running in local demo mode right now, but the conversation flow is ready. When you connect the OpenAI API, this response will come from your model while the rest of the interface stays the same.';
-}
+const apiUrl = process.env.EXPO_PUBLIC_CHAT_API_URL?.replace(/\/$/, '');
 
 export const chatTransport: ChatTransport = {
-  async send(messages) {
-    await pause(650);
-    const lastUserMessage = [...messages].reverse().find((message) => message.role === 'user');
-    return createLocalReply(lastUserMessage?.content ?? '');
+  async send(messages, mode) {
+    if (!apiUrl) {
+      throw new Error('CHAT_API_NOT_CONFIGURED');
+    }
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60_000);
+
+    try {
+      const recent = messages.slice(-40);
+      let remainingImages = 4;
+      const chosen = new Map<number, ChatMessage['images']>();
+      for (let index = recent.length - 1; index >= 0 && remainingImages > 0; index -= 1) {
+        const images = recent[index].images?.slice(-remainingImages);
+        if (images?.length) {
+          chosen.set(index, images);
+          remainingImages -= images.length;
+        }
+      }
+      const outgoing = await Promise.all(recent.map(async ({ role, content }, index) => ({
+        role,
+        content,
+        ...(chosen.has(index) ? {
+          images: await Promise.all(chosen.get(index)!.map((image) => imageDataUrl(image.uri))),
+        } : {}),
+      })));
+      let response: Response;
+      try {
+        response = await fetch(`${apiUrl}/chat`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ mode, messages: outgoing }),
+          signal: controller.signal,
+        });
+      } catch (cause) {
+        if (controller.signal.aborted) throw new Error('CHAT_TIMEOUT');
+        throw new Error('CHAT_NETWORK_ERROR', { cause });
+      }
+
+      if (!response.ok) {
+        const failure: unknown = await response.json().catch(() => null);
+        const serverCode = failure && typeof failure === 'object' && 'error' in failure
+          ? failure.error : null;
+        if (serverCode === 'CREDIT_BALANCE_EXHAUSTED') throw new Error('CHAT_API_402');
+        if (serverCode === 'BODY_TOO_LARGE') throw new Error('PHOTO_TOO_LARGE');
+        if (serverCode === 'PHOTO_REJECTED') throw new Error('PHOTO_REJECTED');
+        throw new Error(`CHAT_API_${response.status}`);
+      }
+
+      const data: unknown = await response.json();
+      if (
+        !data ||
+        typeof data !== 'object' ||
+        !('reply' in data) ||
+        typeof data.reply !== 'string' ||
+        !data.reply.trim()
+      ) {
+        throw new Error('CHAT_API_INVALID_RESPONSE');
+      }
+      return data.reply.trim();
+    } finally {
+      clearTimeout(timeout);
+    }
   },
 };
