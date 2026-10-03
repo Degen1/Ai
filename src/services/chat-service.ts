@@ -1,5 +1,6 @@
 import type { ChatMessage } from '@/data/chat-data';
 import { imageDataUrl } from '@/data/chat-images';
+import { Platform } from 'react-native';
 
 export type ChatMode = 'chat' | 'work';
 
@@ -11,7 +12,7 @@ const apiUrl = process.env.EXPO_PUBLIC_CHAT_API_URL?.replace(/\/$/, '');
 
 export const chatTransport: ChatTransport = {
   async send(messages, mode) {
-    if (!apiUrl) {
+    if (Platform.OS !== 'web' && !apiUrl) {
       throw new Error('CHAT_API_NOT_CONFIGURED');
     }
 
@@ -38,7 +39,7 @@ export const chatTransport: ChatTransport = {
       })));
       let response: Response;
       try {
-        response = await fetch(`${apiUrl}/chat`, {
+        response = await fetch(Platform.OS === 'web' ? '/chat' : `${apiUrl}/chat`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ mode, messages: outgoing }),

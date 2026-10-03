@@ -8,12 +8,13 @@ import {
   pickerStyle,
   tag,
 } from '@expo/ui/swift-ui/modifiers';
-import { Platform, Pressable, useColorScheme } from 'react-native';
+import { Platform, Pressable } from 'react-native';
 
 import { AdaptiveGlass } from '@/components/adaptive-glass';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 
 export type AssistantMode = 'chat' | 'work';
 
@@ -24,7 +25,7 @@ export function ModeSwitcher({
   mode: AssistantMode;
   onChange: (mode: AssistantMode) => void;
 }) {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = useTheme();
   const systemVersion = Number.parseInt(String(Platform.Version), 10);
   const supportsNativeLiquidGlass = Number.isFinite(systemVersion) && systemVersion >= 26;

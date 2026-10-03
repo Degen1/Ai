@@ -1,4 +1,5 @@
 import { router, Stack, useLocalSearchParams } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BackHandler, FlatList, Keyboard, Platform, Pressable, View, useWindowDimensions } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -21,8 +22,11 @@ import { ChatComposer } from '@/components/chat-composer';
 import { HistoryDrawer } from '@/components/history-drawer';
 import { MessageRow } from '@/components/message-row';
 import { ModeSwitcher, type AssistantMode } from '@/components/mode-switcher';
+import { ProfileButton } from '@/components/profile-avatar';
+import { ProfileDrawer } from '@/components/profile-drawer';
 import { SymbolButton } from '@/components/symbol-button';
 import { ThemedText } from '@/components/themed-text';
+import { ThinkingIndicator } from '@/components/thinking-indicator';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import {
   type ChatMessage,
@@ -33,6 +37,12 @@ import { useTheme } from '@/hooks/use-theme';
 import { chatTransport } from '@/services/chat-service';
 
 const drawerEasing = Easing.bezier(0.23, 1, 0.32, 1);
+type DrawerSide = 'history' | 'profile';
+
+function triggerSwipeHaptic() {
+  if (Platform.OS === 'web') return;
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+}
 
 function createMessage(role: ChatMessage['role'], content: string, images?: ChatMessage['images']): ChatMessage {
   return {
@@ -71,8 +81,8 @@ export default function ChatScreen() {
   const [failedPrompt, setFailedPrompt] = useState<string | null>(null);
   const [composerHeight, setComposerHeight] = useState(72);
   const [mode, setMode] = useState<AssistantMode>(() => getConversation(conversation)?.mode ?? 'chat');
-  const [historyOpen, setHistoryOpen] = useState(false);
-  const [drawerMounted, setDrawerMounted] = useState(false);
+  const [activeDrawer, setActiveDrawer] = useState<DrawerSide | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const requestId = useRef(0);
   const requestInFlight = useRef(false);
   const activeConversationId = useRef(getConversation(conversation)?.id ?? null);
@@ -80,71 +90,81 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { width: screenWidth } = useWindowDimensions();
-  const drawerWidth = Math.min(screenWidth * 0.74, 460);
+  const drawerWidth = Math.min(screenWidth * 0.82, 460);
   const pageCornerRadius = Math.round(Math.min(
     60,
     Math.max(48, insets.top - 4, Math.min(screenWidth, 430) * 0.14),
   ));
-  const drawerProgress = useSharedValue(0);
+  const drawerPosition = useSharedValue(0);
   const panStart = useSharedValue(0);
+  const panSide = useSharedValue(1);
   const keyboardProgress = useSharedValue(0);
   const bottomInset = Math.max(insets.bottom, Spacing.sm);
   const headerHeight = Math.max(insets.top, Spacing.sm) + 64 + Spacing.sm;
 
-  const mountHistory = useCallback(() => {
+  const mountDrawer = useCallback((side: DrawerSide) => {
     Keyboard.dismiss();
-    setDrawerMounted(true);
+    setActiveDrawer(side);
   }, []);
-  const finishClosingHistory = useCallback(() => {
-    setHistoryOpen(false);
-    setDrawerMounted(false);
+  const finishClosingDrawer = useCallback(() => {
+    setDrawerOpen(false);
+    setActiveDrawer(null);
   }, []);
-  const finishOpeningHistory = useCallback(() => setHistoryOpen(true), []);
-  const closeHistory = useCallback(() => {
-    drawerProgress.set(withTiming(0, {
+  const finishOpeningDrawer = useCallback(() => setDrawerOpen(true), []);
+  const openDrawer = useCallback((side: DrawerSide) => {
+    mountDrawer(side);
+    setDrawerOpen(true);
+  }, [mountDrawer]);
+  const closeDrawer = useCallback(() => {
+    drawerPosition.set(withTiming(0, {
       duration: 260,
       easing: drawerEasing,
       reduceMotion: ReduceMotion.System,
     }, (finished) => {
-      if (finished) scheduleOnRN(finishClosingHistory);
+      if (finished) scheduleOnRN(finishClosingDrawer);
     }));
-  }, [drawerProgress, finishClosingHistory]);
+  }, [drawerPosition, finishClosingDrawer]);
 
   useEffect(() => {
-    if (historyOpen) {
-      drawerProgress.set(withTiming(1, {
+    if (drawerOpen && activeDrawer) {
+      drawerPosition.set(withTiming(activeDrawer === 'history' ? 1 : -1, {
         duration: 260,
         easing: drawerEasing,
         reduceMotion: ReduceMotion.System,
       }));
     }
-  }, [drawerProgress, historyOpen]);
+  }, [activeDrawer, drawerOpen, drawerPosition]);
 
   useEffect(() => {
-    if (!historyOpen) return;
+    if (!drawerOpen) return;
     const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
-      closeHistory();
+      closeDrawer();
       return true;
     });
     return () => subscription.remove();
-  }, [closeHistory, historyOpen]);
+  }, [closeDrawer, drawerOpen]);
 
-  const historyPan = useMemo(() => Gesture.Pan()
-    .activeOffsetX(historyOpen ? [-12, 12] : 12)
+  const drawerPan = useMemo(() => Gesture.Pan()
+    .activeOffsetX([-12, 12])
     .failOffsetY([-12, 12])
-    .onStart(() => {
-      panStart.set(drawerProgress.get());
+    .onStart((event) => {
+      panStart.set(drawerPosition.get());
+      panSide.set(panStart.get() > 0 ? 1 : panStart.get() < 0 ? -1 : event.translationX >= 0 ? 1 : -1);
       if (panStart.get() === 0) {
-        scheduleOnRN(mountHistory);
+        scheduleOnRN(mountDrawer, panSide.get() > 0 ? 'history' : 'profile');
       }
     })
     .onUpdate((event) => {
-      drawerProgress.set(Math.min(1, Math.max(0, panStart.get() + event.translationX / drawerWidth)));
+      const next = panStart.get() + event.translationX / drawerWidth;
+      drawerPosition.set(panSide.get() > 0 ? Math.min(1, Math.max(0, next)) : Math.max(-1, Math.min(0, next)));
     })
     .onEnd((event) => {
-      const projectedProgress = drawerProgress.get() + (event.velocityX / drawerWidth) * 0.2;
-      const target = projectedProgress < 0.5 ? 0 : 1;
-      drawerProgress.set(withSpring(target, {
+      const projectedPosition = drawerPosition.get() + (event.velocityX / drawerWidth) * 0.2;
+      const target = panSide.get() > 0
+        ? (projectedPosition < 0.5 ? 0 : 1)
+        : (projectedPosition > -0.5 ? 0 : -1);
+      if (target !== panStart.get()) scheduleOnRN(triggerSwipeHaptic);
+      drawerPosition.set(withSpring(target, {
         duration: 300,
         dampingRatio: 0.8,
         velocity: event.velocityX / drawerWidth,
@@ -152,14 +172,14 @@ export default function ChatScreen() {
         reduceMotion: ReduceMotion.System,
       }, (finished) => {
         if (!finished) return;
-        if (target === 0) scheduleOnRN(finishClosingHistory);
-        else scheduleOnRN(finishOpeningHistory);
+        if (target === 0) scheduleOnRN(finishClosingDrawer);
+        else scheduleOnRN(finishOpeningDrawer);
       }));
-    }), [drawerProgress, drawerWidth, finishClosingHistory, finishOpeningHistory, historyOpen, mountHistory, panStart]);
+    }), [drawerPosition, drawerWidth, finishClosingDrawer, finishOpeningDrawer, mountDrawer, panSide, panStart]);
 
   const chatSlideStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: drawerProgress.get() * drawerWidth }],
-    borderRadius: interpolate(drawerProgress.get(), [0, 1], [0, pageCornerRadius]),
+    transform: [{ translateX: drawerPosition.get() * drawerWidth }],
+    borderRadius: interpolate(Math.abs(drawerPosition.get()), [0, 1], [0, pageCornerRadius]),
   }));
 
   useKeyboardHandler({
@@ -197,6 +217,7 @@ export default function ChatScreen() {
     setError(null);
     setSaveError(null);
     setFailedPrompt(null);
+    if (activeDrawer) closeDrawer();
   };
 
   const changeMode = (nextMode: AssistantMode) => {
@@ -218,7 +239,12 @@ export default function ChatScreen() {
     setSaveError(null);
     setFailedPrompt(null);
     setMode(selected.mode);
-    closeHistory();
+    closeDrawer();
+  };
+
+  const onDeleteConversation = (id: string) => {
+    if (activeConversationId.current !== id) return;
+    startNewChat();
   };
 
   const requestReply = async (nextMessages: ChatMessage[]) => {
@@ -280,15 +306,20 @@ export default function ChatScreen() {
   };
 
   return (
-    <GestureDetector gesture={historyPan}>
+    <GestureDetector gesture={drawerPan}>
       <View style={{ flex: 1, backgroundColor: theme.background, overflow: 'hidden' }}>
-        {drawerMounted ? (
+        {activeDrawer === 'history' ? (
           <HistoryDrawer
-            onClose={closeHistory}
+            onClose={closeDrawer}
+            onDelete={onDeleteConversation}
+            onNewChat={startNewChat}
             onSelect={openConversation}
-            progress={drawerProgress}
+            progress={drawerPosition}
             width={drawerWidth}
           />
+        ) : null}
+        {activeDrawer === 'profile' ? (
+          <ProfileDrawer onClose={closeDrawer} progress={drawerPosition} width={drawerWidth} />
         ) : null}
         <Animated.View
           style={[
@@ -349,22 +380,12 @@ export default function ChatScreen() {
                       accessibilityLabel="ታሪኽ ዕላላት ክፈት"
                       glass
                       name={{ ios: 'line.3.horizontal', android: 'menu', web: 'menu' }}
-                      onPress={() => {
-                        Keyboard.dismiss();
-                        setDrawerMounted(true);
-                        setHistoryOpen(true);
-                      }}
+                      onPress={() => openDrawer('history')}
                       size={22}
                     />
                   </View>
                   <View style={{ zIndex: 1 }}>
-                    <SymbolButton
-                      accessibilityLabel="ሓድሽ ዕላል ጀምር"
-                      glass
-                      name={{ ios: 'plus.message', android: 'add_comment', web: 'add_comment' }}
-                      onPress={startNewChat}
-                      size={22}
-                    />
+                    <ProfileButton onPress={() => openDrawer('profile')} />
                   </View>
                 </View>
               </View>
@@ -372,6 +393,7 @@ export default function ChatScreen() {
               <FlatList
                 ref={listRef}
                 contentInsetAdjustmentBehavior="never"
+                showsVerticalScrollIndicator={false}
                 contentContainerStyle={{
                   flexGrow: 1,
                   gap: Spacing.lg,
@@ -386,7 +408,6 @@ export default function ChatScreen() {
                   <>
                     {isThinking ? (
                       <View
-                        accessibilityLabel="ሳራ ትሓስብ ኣላ"
                         style={{
                           width: '100%',
                           maxWidth: MaxContentWidth,
@@ -404,9 +425,7 @@ export default function ChatScreen() {
                             borderWidth: 1,
                             borderColor: theme.glassBorder,
                           }}>
-                          <ThemedText type="caption" themeColor="textSecondary">
-                            ትሓስብ ኣላ…
-                          </ThemedText>
+                          <ThinkingIndicator />
                         </AdaptiveGlass>
                       </View>
                     ) : null}
@@ -479,11 +498,11 @@ export default function ChatScreen() {
               </Animated.View>
             </View>
           </KeyboardAvoidingView>
-          {historyOpen ? (
+          {drawerOpen ? (
             <Pressable
-              accessibilityLabel="ዝርዝር ዕላላት ዕጸው"
+              accessibilityLabel="መሳጢ ዕጸው"
               accessibilityRole="button"
-              onPress={closeHistory}
+              onPress={closeDrawer}
               style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0 }}
             />
           ) : null}

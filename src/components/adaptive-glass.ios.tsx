@@ -3,10 +3,11 @@ import { Spacer, ZStack } from '@expo/ui/swift-ui';
 import { glassEffect } from '@expo/ui/swift-ui/modifiers';
 import { BlurView } from 'expo-blur';
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Platform, StyleSheet, useColorScheme, View } from 'react-native';
+import { AccessibilityInfo, Platform, StyleSheet, View } from 'react-native';
 
 import type { AdaptiveGlassProps } from '@/components/adaptive-glass.types';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 
 export function AdaptiveGlass({
   children,
@@ -18,7 +19,7 @@ export function AdaptiveGlass({
   strong = false,
 }: AdaptiveGlassProps) {
   const [reduceTransparency, setReduceTransparency] = useState(false);
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = useTheme();
   const systemVersion = Number.parseInt(String(Platform.Version), 10);
   const supportsNativeLiquidGlass = Number.isFinite(systemVersion) && systemVersion >= 26;

@@ -1,9 +1,12 @@
 import { View } from 'react-native';
 
 import { Radius } from '@/constants/theme';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 
-export function SaraMark({ size = 44 }: { size?: number }) {
+export function SaraMark({ size = 44, transparentCenter = false }: { size?: number; transparentCenter?: boolean }) {
   const innerSize = Math.round(size * 0.42);
+  const isDark = useAppColorScheme() === 'dark';
+  const isCutout = transparentCenter || isDark;
 
   return (
     <View
@@ -15,9 +18,11 @@ export function SaraMark({ size = 44 }: { size?: number }) {
         borderRadius: Radius.full,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: '#2878F0',
+        backgroundColor: isCutout ? 'transparent' : '#FF0000',
+        borderColor: '#FF0000',
+        borderWidth: isCutout ? (size - innerSize) / 2 : 0,
       }}>
-      <View
+      {isCutout ? null : <View
         style={{
           width: innerSize,
           height: innerSize,
@@ -26,7 +31,7 @@ export function SaraMark({ size = 44 }: { size?: number }) {
           backgroundColor: '#FFFFFF',
           transform: [{ rotate: '45deg' }],
         }}
-      />
+      />}
     </View>
   );
 }

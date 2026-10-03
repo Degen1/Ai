@@ -14,7 +14,6 @@ import type { ComponentProps } from 'react';
 import {
   Platform,
   Pressable,
-  useColorScheme,
   View,
   type StyleProp,
   type ViewStyle,
@@ -24,6 +23,7 @@ import { SymbolView } from 'expo-symbols';
 import { AdaptiveGlass } from '@/components/adaptive-glass';
 import { Radius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 
 type SymbolButtonProps = {
   accessibilityLabel: string;
@@ -55,7 +55,7 @@ export function SymbolButton({
   size = 20,
   style,
 }: SymbolButtonProps) {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = useTheme();
   const systemVersion = Number.parseInt(String(Platform.Version), 10);
   const supportsNativeLiquidGlass = Number.isFinite(systemVersion) && systemVersion >= 26;

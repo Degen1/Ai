@@ -81,5 +81,14 @@ export function createConversationStore(storage: ConversationStorage) {
       listeners.forEach((listener) => listener());
       if (writeError) throw writeError;
     },
+    delete(id: string) {
+      const conversation = conversations.find((item) => item.id === id);
+      if (!conversation) return null;
+      const next = conversations.filter((item) => item.id !== id);
+      storage.write(JSON.stringify(next));
+      conversations = next;
+      listeners.forEach((listener) => listener());
+      return conversation;
+    },
   };
 }
