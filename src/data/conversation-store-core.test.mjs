@@ -51,3 +51,28 @@ test('restores photo references with a saved chat', () => {
   const restored = createConversationStore(storage).getConversation('photos');
   assert.deepEqual(restored?.messages[0].images, message.images);
 });
+
+test('deletes only the chosen conversation and keeps the deletion after restart', () => {
+  let disk = null;
+  const storage = { read: () => disk, write: (value) => { disk = value; } };
+  const store = createConversationStore(storage);
+  store.save('first', [user('u1', 'First chat')], 'chat', 100);
+  store.save('second', [user('u2', 'Second chat')], 'chat', 101);
+
+  assert.equal(store.delete('first')?.id, 'first');
+  assert.equal(store.getConversation('first'), undefined);
+  assert.deepEqual(createConversationStore(storage).getSnapshot().map(({ id }) => id), ['second']);
+});
+
+test('keeps a conversation when deleting it fails to save', () => {
+  let fail = false;
+  const store = createConversationStore({
+    read: () => null,
+    write() { if (fail) throw new Error('disk unavailable'); },
+  });
+  store.save('keep', [user('u1', 'Keep me')], 'chat');
+  fail = true;
+
+  assert.throws(() => store.delete('keep'));
+  assert.equal(store.getConversation('keep')?.title, 'Keep me');
+});

@@ -1,7 +1,6 @@
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
-import { SaraMark } from '@/components/sara-mark';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -60,9 +59,12 @@ export function MessageRow({ message }: { message: ChatMessage }) {
         gap: Spacing.twoHalf,
         paddingHorizontal: Spacing.md,
       }}>
-      <SaraMark size={30} />
-      <View style={{ flex: 1, paddingTop: 2, gap: Spacing.sm }}>
-        <ThemedText type="label">ሳራ</ThemedText>
+      <Image
+        source={require('../../assets/images/sara-lips.png')}
+        contentFit="cover"
+        style={{ width: 36, height: 30 }}
+      />
+      <View style={{ flex: 1, paddingTop: 2 }}>
         <ThemedText type="body" selectable>
           {message.content}
         </ThemedText>

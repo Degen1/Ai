@@ -1,15 +1,15 @@
 import { BlurView } from 'expo-blur';
-import { useColorScheme } from 'react-native';
 
 import type { AdaptiveGlassProps } from '@/components/adaptive-glass.types';
 import { useTheme } from '@/hooks/use-theme';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 
 export function AdaptiveGlass({
   children,
   style,
   strong = false,
 }: AdaptiveGlassProps) {
-  const colorScheme = useColorScheme();
+  const colorScheme = useAppColorScheme();
   const theme = useTheme();
 
   return (

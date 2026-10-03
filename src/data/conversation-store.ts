@@ -34,6 +34,24 @@ export function useConversations() {
 
 export const getConversation = store.getConversation;
 
+export function deleteConversation(id: string) {
+  const removed = store.delete(id);
+  if (!removed || Platform.OS === 'web') return;
+
+  const remainingImages = new Set(store.getSnapshot().flatMap((conversation) =>
+    conversation.messages.flatMap((message) => message.images?.map((image) => image.uri) ?? []),
+  ));
+  for (const image of removed.messages.flatMap((message) => message.images ?? [])) {
+    if (!image.uri.startsWith('file:') || remainingImages.has(image.uri)) continue;
+    try {
+      const file = new File(image.uri);
+      if (file.exists) file.delete();
+    } catch {
+      // The conversation is already removed; a missing attachment should not restore it.
+    }
+  }
+}
+
 export function saveConversation(
   id: string,
   messages: ChatMessage[],
