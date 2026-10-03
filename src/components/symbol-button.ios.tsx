@@ -5,6 +5,7 @@ import {
   buttonStyle,
   controlSize,
   disabled as disabledModifier,
+  foregroundStyle,
   imageScale,
   labelStyle,
   tint,
@@ -32,6 +33,7 @@ type SymbolButtonProps = {
   disabled?: boolean;
   filled?: boolean;
   glass?: boolean;
+  iconColor?: string;
   size?: number;
   style?: StyleProp<ViewStyle>;
 };
@@ -52,6 +54,7 @@ export function SymbolButton({
   disabled = false,
   filled = false,
   glass = false,
+  iconColor,
   size = 20,
   style,
 }: SymbolButtonProps) {
@@ -77,6 +80,7 @@ export function SymbolButton({
             imageScale(size >= 22 ? 'large' : 'medium'),
             labelStyle('iconOnly'),
             tint(filled ? theme.primaryAction : theme.text),
+            ...(iconColor ? [foregroundStyle(iconColor)] : []),
             disabledModifier(disabled),
           ]}
           onPress={onPress}
@@ -110,7 +114,7 @@ export function SymbolButton({
       <SymbolView
         name={name}
         size={size}
-        tintColor={filled ? theme.primaryActionText : theme.text}
+        tintColor={iconColor ?? (filled ? theme.primaryActionText : theme.text)}
         weight="semibold"
       />
     </Pressable>

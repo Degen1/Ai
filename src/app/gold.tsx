@@ -1,3 +1,4 @@
+import { router } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -47,10 +48,10 @@ export default function GoldScreen() {
           setOptions(null);
           const error = optionsResult.reason;
           setMessage(error instanceof Error && error.message === 'REVENUECAT_NOT_CONFIGURED'
-            ? 'ናይ Gold ግዝኢት ኣብዚ ሕጂ ኣይተዳለወን።'
+            ? 'ናይ ሳራ ጎልድ ግዝኢት ኣብዚ ሕጂ ኣይተዳለወን።'
             : error instanceof Error && error.message === 'GOLD_OFFERING_UNAVAILABLE'
-              ? 'ናይ Gold መደባት ካብ App Store ገና ኣይተረኽቡን። ድሒርካ ፈትን።'
-            : 'ናይ Gold ኣማራጺታት ክጽዕኑ ኣይከኣሉን። መርበብካ ፈትሽ።');
+              ? 'ናይ ሳራ ጎልድ መደባት ካብ App Store ገና ኣይተረኽቡን። ድሒርካ ፈትን።'
+            : 'ናይ ሳራ ጎልድ ኣማራጺታት ክጽዕኑ ኣይከኣሉን። መርበብካ ፈትሽ።');
         }
       })
       .finally(() => { if (isMounted()) setLoading(false); });
@@ -69,7 +70,7 @@ export default function GoldScreen() {
     try {
       const isActive = await buyGold(options[period]);
       setPlanStatus(isActive ? 'gold' : 'free');
-      setMessage(isActive ? 'Gold ተኸፊቱልካ ኣሎ።' : 'ግዝኢትካ ገና ኣይተረጋገጸን።');
+      setMessage(isActive ? 'ሳራ ጎልድ ተኸፊቱልካ ኣሎ።' : 'ግዝኢትካ ገና ኣይተረጋገጸን።');
     } catch (error) {
       if (!(typeof error === 'object' && error !== null && 'userCancelled' in error && error.userCancelled)) {
         setMessage('ግዝኢት ኣይተዛዘመን። እንደገና ፈትን።');
@@ -86,7 +87,7 @@ export default function GoldScreen() {
     try {
       const isActive = await restoreGold();
       setPlanStatus(isActive ? 'gold' : 'free');
-      setMessage(isActive ? 'Gold ተመሊሱልካ ኣሎ።' : 'ዝነጠፈ Gold ግዝኢት ኣይተረኽበን።');
+      setMessage(isActive ? 'ሳራ ጎልድ ተመሊሱልካ ኣሎ።' : 'ዝነጠፈ ናይ ሳራ ጎልድ ግዝኢት ኣይተረኽበን።');
     } catch {
       setMessage('ግዝኢትካ ክምለስ ኣይከኣለን። እንደገና ፈትን።');
     } finally {
@@ -125,7 +126,7 @@ export default function GoldScreen() {
         <View style={{ gap: Spacing.xs }}>
           <ThemedText type="headline" numberOfLines={1}>{name}</ThemedText>
           <ThemedText type="caption" themeColor="textSecondary">
-            {planStatus === 'gold' ? 'Gold · ንጡፍ'
+            {planStatus === 'gold' ? 'ጎልድ · ንጡፍ'
               : planStatus === 'free' ? 'ነጻ'
                 : planStatus === 'loading' ? 'ይጽዕን ኣሎ…' : 'መደብ ኣይተረጋገጸን'}
           </ThemedText>
@@ -144,7 +145,7 @@ export default function GoldScreen() {
       }}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
           <ProfileAvatar size={62} />
-          <ThemedText type="caption" style={{ color: '#E8C882', letterSpacing: 1.4 }}>SARA · GOLD</ThemedText>
+          <ThemedText type="caption" style={{ color: '#E8C882', letterSpacing: 1.4 }}>ሳራ · ጎልድ</ThemedText>
         </View>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
           <ThemedText type="headline" numberOfLines={1} style={{ color: '#FFFFFF', flexShrink: 1 }}>{name}</ThemedText>
@@ -157,7 +158,7 @@ export default function GoldScreen() {
             {(['monthly', 'annual'] as const).map((period) => (
               <Pressable
                 key={period}
-                accessibilityLabel={`${period === 'monthly' ? 'ወርሓዊ' : 'ዓመታዊ'} Gold ${price(options[period], period)}`}
+                accessibilityLabel={`${period === 'monthly' ? 'ወርሓዊ' : 'ዓመታዊ'} ጎልድ ${price(options[period], period)}`}
                 accessibilityRole="button"
                 accessibilityState={{ disabled: busy }}
                 disabled={busy}
@@ -206,6 +207,9 @@ export default function GoldScreen() {
       <View style={{ flexDirection: 'row', gap: Spacing.lg }}>
         <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL(TERMS_OF_USE_URL); }}>
           <ThemedText type="caption" themeColor="textSecondary" style={{ textDecorationLine: 'underline' }}>ናይ ኣጠቓቕማ ውዕል</ThemedText>
+        </Pressable>
+        <Pressable accessibilityRole="link" onPress={() => router.push('/privacy')}>
+          <ThemedText type="caption" themeColor="textSecondary" style={{ textDecorationLine: 'underline' }}>ፖሊሲ ብሕትውና</ThemedText>
         </Pressable>
       </View>
     </ScrollView>

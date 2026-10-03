@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import * as Linking from 'expo-linking';
@@ -14,8 +15,10 @@ import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { TERMS_OF_USE_URL } from '@/constants/legal';
+import { SUPPORT_EMAIL } from '@/constants/privacy-policy';
 import { clearAccountProfile, removeProfileAvatar, saveProfileAvatar, setProfileDisplayName, useAccountProfile } from '@/data/profile-settings';
 import { useAuthSession } from '@/hooks/use-auth-session';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 import { deleteAccount, logout, updateAccountName } from '@/services/auth-service';
 import { getGoldStatus, subscribeGoldStatus } from '@/services/gold-subscription';
@@ -30,6 +33,7 @@ type PendingAvatar = { uri: string; base64: string };
 
 export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) {
   const insets = useSafeAreaInsets();
+  const colorScheme = useAppColorScheme();
   const theme = useTheme();
   const { status, user } = useAuthSession();
   const { avatar, displayName } = useAccountProfile(user?.uid ?? null);
@@ -42,6 +46,15 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
   const [error, setError] = useState<string | null>(null);
   const [gold, setGold] = useState(false);
   const cardWidth = width - Spacing.md * 2;
+  let glassAvailable = false;
+  if (Platform.OS === 'ios') {
+    try {
+      glassAvailable = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
+    } catch {
+      // Older development builds may not contain the native glass module.
+    }
+  }
+  const ProfileCard = glassAvailable ? GlassView : View;
   const drawerStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: (1 + progress.get()) * width }],
   }));
@@ -62,7 +75,7 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
     setError(null);
   };
 
-  const openModal = (path: '/auth' | '/gold') => {
+  const openModal = (path: '/auth' | '/gold' | '/privacy') => {
     cancelEditing();
     onClose();
     router.push(path);
@@ -206,16 +219,18 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
           paddingHorizontal: Spacing.md,
           gap: Spacing.lg,
         }}>
-        <View style={{
-          width: cardWidth,
-          aspectRatio: 1.586,
-          justifyContent: 'space-between',
-          padding: Spacing.threeHalf,
-          borderRadius: 22,
-          backgroundColor: theme.surface,
-          borderWidth: 1,
-          borderColor: theme.border,
-        }}>
+        <ProfileCard
+          {...(glassAvailable ? { glassEffectStyle: 'regular' as const, colorScheme } : {})}
+          style={{
+            width: cardWidth,
+            aspectRatio: 1.586,
+            justifyContent: 'space-between',
+            padding: Spacing.threeHalf,
+            borderRadius: 22,
+            backgroundColor: glassAvailable ? undefined : theme.surface,
+            borderWidth: 1,
+            borderColor: glassAvailable ? theme.glassBorder : theme.border,
+          }}>
           {editing && user ? (
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <View style={{ width: 72, height: 72 }}>
@@ -295,7 +310,7 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
                 </ThemedText>
                 {user && gold ? (
                   <View
-                    accessibilityLabel="Sara Gold ንጡፍ"
+                    accessibilityLabel="ሳራ ጎልድ ንጡፍ"
                     style={{ width: 25, height: 25, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8C882' }}>
                     <SymbolView name={{ ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' }} size={17} tintColor="#172222" />
                   </View>
@@ -322,11 +337,11 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
                 opacity: pressed ? 0.75 : 1,
               })}>
               <ThemedText type="label" style={{ color: theme.primaryActionText }}>
-                {status === 'loading' || busy ? '…' : editing ? 'Save' : user ? 'Edit' : 'Login'}
+                {status === 'loading' || busy ? '…' : editing ? 'ዓቅብ' : user ? 'ኣርም' : 'እቶ'}
               </ThemedText>
             </Pressable>
           </View>
-        </View>
+        </ProfileCard>
         {error ? <ThemedText type="caption" themeColor="danger">{error}</ThemedText> : null}
 
         <View style={{ gap: Spacing.sm }}>
@@ -371,6 +386,12 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
         <View style={{ width: cardWidth, flexDirection: 'row', gap: Spacing.lg, paddingHorizontal: Spacing.xs }}>
           <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL(TERMS_OF_USE_URL); }}>
             <ThemedText type="caption" themeColor="textSecondary">ናይ ኣጠቓቕማ ውዕል</ThemedText>
+          </Pressable>
+          <Pressable accessibilityRole="link" onPress={() => openModal('/privacy')}>
+            <ThemedText type="caption" themeColor="textSecondary">ፖሊሲ ብሕትውና</ThemedText>
+          </Pressable>
+          <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL(`mailto:${SUPPORT_EMAIL}`); }}>
+            <ThemedText type="caption" themeColor="textSecondary">ሓገዝ</ThemedText>
           </Pressable>
         </View>
       </ScrollView>

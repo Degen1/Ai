@@ -48,8 +48,10 @@ export async function login(email: string, password: string) {
   await signInWithEmailAndPassword(webAuth(), email, password);
 }
 
-export async function register(email: string, password: string) {
-  await createUserWithEmailAndPassword(webAuth(), email, password);
+export async function register(email: string, password: string, name: string) {
+  const credential = await createUserWithEmailAndPassword(webAuth(), email, password);
+  await updateProfile(credential.user, { displayName: name });
+  return credential.user.uid;
 }
 
 export async function resetPassword(email: string) {

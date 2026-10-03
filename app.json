@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Sara",
+    "name": "ሳራ",
     "slug": "ai",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -40,6 +40,7 @@
       [
         "expo-image-picker",
         {
+          "photosPermission": "ሳራ ናብ ስእልታትካ ክትኣቱ ፍቐደላ፣ ኣብ ዕላልካ ስእሊ ክትውስኽ ወይ ናይ መገለጺ ስእሊ ክትመርጽ ክትክእል።",
           "microphonePermission": false
         }
       ],

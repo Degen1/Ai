@@ -8,6 +8,7 @@ import { SymbolButton } from '@/components/symbol-button';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
 import type { SelectedPhoto } from '@/data/chat-images';
+import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
 const maxPhotos = 4;
@@ -25,6 +26,7 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
   const [photos, setPhotos] = useState<SelectedPhoto[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
+  const colorScheme = useAppColorScheme();
   const theme = useTheme();
   const canSend = (draft.trim().length > 0 || photos.length > 0) && !disabled;
 
@@ -99,7 +101,10 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
       <AdaptiveGlass strong style={{
         minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
         paddingHorizontal: 7, paddingVertical: 6, borderRadius: Radius.full,
-        borderWidth: 1, borderColor: theme.glassBorder, boxShadow: Shadows.composer,
+        borderWidth: 1,
+        borderColor: colorScheme === 'light' ? theme.border : theme.glassBorder,
+        boxShadow: Shadows.composer,
+        ...(colorScheme === 'light' ? { backgroundColor: 'rgba(233, 232, 227, 0.86)' } : {}),
       }}>
         <SymbolButton
           accessibilityLabel="ስእሊ ወስኽ"
@@ -111,6 +116,7 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
         <TextInput
           ref={inputRef}
           accessibilityLabel="ንሳራ መልእኽቲ ጽሓፍ"
+          autoFocus
           autoCapitalize="sentences"
           autoCorrect
           editable={!disabled}
@@ -131,6 +137,7 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
           accessibilityLabel="መልእኽቲ ስደድ"
           disabled={!canSend}
           filled
+          iconColor={colorScheme === 'dark' ? '#000000' : undefined}
           name={{ ios: 'arrow.up', android: 'arrow_upward', web: 'arrow_upward' }}
           onPress={submit}
           size={19}
