@@ -31,7 +31,8 @@ export default function RootLayout() {
               }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="gold" options={{ title: '', presentation: 'modal' }} />
-              <Stack.Screen name="auth" options={{ title: 'መለለዪ', presentation: 'modal' }} />
+              <Stack.Screen name="auth" options={{ title: '', presentation: 'modal' }} />
+              <Stack.Screen name="privacy" options={{ title: 'ፖሊሲ ብሕትውና' }} />
               <Stack.Screen
                 name="history"
                 options={{

@@ -12,6 +12,7 @@ type SymbolButtonProps = {
   disabled?: boolean;
   filled?: boolean;
   glass?: boolean;
+  iconColor?: string;
   size?: number;
   style?: StyleProp<ViewStyle>;
 };
@@ -23,6 +24,7 @@ export function SymbolButton({
   disabled = false,
   filled = false,
   glass = false,
+  iconColor,
   size = 20,
   style,
 }: SymbolButtonProps) {
@@ -52,7 +54,7 @@ export function SymbolButton({
       <SymbolView
         name={name}
         size={size}
-        tintColor={filled ? theme.primaryActionText : theme.text}
+        tintColor={iconColor ?? (filled ? theme.primaryActionText : theme.text)}
         weight="semibold"
       />
     </Pressable>
