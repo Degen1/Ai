@@ -3,6 +3,7 @@ import { Picker, Text } from '@expo/ui/swift-ui';
 import {
   accessibilityLabel,
   controlSize,
+  font,
   frame,
   glassEffect,
   pickerStyle,
@@ -12,7 +13,7 @@ import { Platform, Pressable } from 'react-native';
 
 import { AdaptiveGlass } from '@/components/adaptive-glass';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Shadows } from '@/constants/theme';
+import { AppFontNativeFamily, Radius, Shadows } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 
@@ -92,8 +93,8 @@ export function ModeSwitcher({
           if (selection === 'chat' || selection === 'work') onChange(selection);
         }}
         selection={mode}>
-        <Text modifiers={[tag('chat')]}>ዕላል</Text>
-        <Text modifiers={[tag('work')]}>ስራሕ</Text>
+        <Text modifiers={[tag('chat'), font({ family: AppFontNativeFamily, size: 16, textStyle: 'body' })]}>ዕላል</Text>
+        <Text modifiers={[tag('work'), font({ family: AppFontNativeFamily, size: 16, textStyle: 'body' })]}>ስራሕ</Text>
       </Picker>
     </Host>
   );

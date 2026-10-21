@@ -14,14 +14,14 @@ Sara saves your conversation history, attached chat photos, chosen profile pictu
 
 Sara Gold is an optional subscription. Apple processes App Store payments, and RevenueCat processes purchase history and an app user identifier to check subscription access and restore purchases. Prices and availability are shown in the app before you buy.
 
-We use these services to operate Sara: Expo EAS Hosting for the chat service, OpenAI for AI responses, Firebase Authentication for optional accounts, RevenueCat for subscription access, and Apple for App Store payments. Each provider processes information under its own terms and privacy practices. We do not sell your chat content. [Confirm whether Google Mobile Ads SDK transmits any data in this build; no ads are displayed in the current UI.]
+We use these services to operate Sara: Expo EAS Hosting for the chat service, OpenAI for AI responses, Firebase Authentication for optional accounts, RevenueCat for subscription access, and Apple for App Store payments. Each provider processes information under its own terms and privacy practices. We do not sell your chat content. Google AdMob provides banner and optional rewarded ads for free users. Completing a rewarded ad unlocks two more questions. Gold has no ads and unlimited questions. Non-personalized ad requests may include IP address, device identifiers, diagnostics, and ad interactions; chat content is not sent to AdMob. Question credits are saved locally. Ad privacy choices are available from the profile where required.
 
 To ask about your data or privacy choices, contact **degenlogistics@gmail.com**. You can request account deletion from the app's profile settings. [Add a separate retention/deletion explanation for any server-side logs or backups after checking provider and hosting settings.]
 
 ## Before publication
 
 - Add a publication date after the policy is deployed. Check that users can reach the support email.
-- Verify Firebase, RevenueCat, OpenAI, EAS Hosting, and bundled Google Mobile Ads SDK settings and data practices against the release binary. Confirm whether the Google SDK sends data even though the app does not request ads.
+- Verify Firebase, RevenueCat, OpenAI, EAS Hosting, and bundled Google Mobile Ads SDK settings and data practices against the release binary. Verify ad consent messages, privacy choices, and the App Store privacy disclosures for the enabled ad requests.
 - Confirm account deletion and chat-history deletion behavior on a physical device. Account deletion does **not** currently erase locally saved conversations; preserve that distinction in the policy or change the code.
 - Publish the final policy at a Sara-specific HTTPS URL and add an in-app link. Replace the unrelated policy URL in App Store Connect, then update the App Privacy answers to match this build.
 

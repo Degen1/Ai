@@ -8,7 +8,7 @@ import type { PurchasesPackage } from 'react-native-purchases';
 import { ProfileAvatar } from '@/components/profile-avatar';
 import { ThemedText } from '@/components/themed-text';
 import { TERMS_OF_USE_URL } from '@/constants/legal';
-import { Radius, Spacing } from '@/constants/theme';
+import { ControlSize, MembershipCard, ProfileCardMaxWidth, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAccountProfile } from '@/data/profile-settings';
 import { useAuthSession } from '@/hooks/use-auth-session';
 import { useTheme } from '@/hooks/use-theme';
@@ -22,10 +22,13 @@ export default function GoldScreen() {
   const theme = useTheme();
   const { user } = useAuthSession();
   const { displayName } = useAccountProfile(user?.uid ?? null);
-  const { width } = useWindowDimensions();
-  const cardWidth = Math.min(width - Spacing.md * 2, 380);
-  const cardHeight = cardWidth / 1.586;
-  const name = user ? displayName || user.displayName || 'ስምካ' : 'መገለጺኻ';
+  const { width, fontScale } = useWindowDimensions();
+  const cardWidth = Math.min(width - Spacing.md * 2, ProfileCardMaxWidth);
+  const cardHeight = Math.max(
+    cardWidth / MembershipCard.aspectRatio,
+    Spacing.threeHalf * 2 + ControlSize.avatar + Spacing.sm + Typography.headline.lineHeight + Spacing.md + ControlSize.touch,
+  );
+  const name = user ? displayName || user.displayName || 'ስምካ' : 'ተጠቃሚ';
   const [options, setOptions] = useState<GoldOptions | null>(null);
   const [planStatus, setPlanStatus] = useState<PlanStatus>('loading');
   const [loading, setLoading] = useState(true);
@@ -114,17 +117,21 @@ export default function GoldScreen() {
       }}>
       <View style={{
         width: cardWidth,
-        height: cardHeight,
+        minHeight: cardHeight,
+        gap: Spacing.md,
         justifyContent: 'space-between',
         padding: Spacing.threeHalf,
-        borderRadius: 22,
+        borderRadius: MembershipCard.radius,
+        borderCurve: 'continuous',
         borderWidth: 1,
         borderColor: theme.border,
         backgroundColor: theme.surface,
       }}>
-        <ProfileAvatar size={62} />
-        <View style={{ gap: Spacing.xs }}>
+        <View style={{ gap: Spacing.sm }}>
+          <ProfileAvatar size={ControlSize.avatar} />
           <ThemedText type="headline" numberOfLines={1}>{name}</ThemedText>
+        </View>
+        <View style={{ minHeight: ControlSize.touch, justifyContent: 'center' }}>
           <ThemedText type="caption" themeColor="textSecondary">
             {planStatus === 'gold' ? 'ጎልድ · ንጡፍ'
               : planStatus === 'free' ? 'ነጻ'
@@ -135,26 +142,30 @@ export default function GoldScreen() {
 
       <View style={{
         width: cardWidth,
-        height: cardHeight,
+        minHeight: cardHeight,
+        gap: Spacing.md,
         justifyContent: 'space-between',
         padding: Spacing.threeHalf,
-        borderRadius: 22,
+        borderRadius: MembershipCard.radius,
+        borderCurve: 'continuous',
         backgroundColor: '#172222',
         borderWidth: 1,
         borderColor: '#B99A58',
       }}>
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-          <ProfileAvatar size={62} />
-          <ThemedText type="caption" style={{ color: '#E8C882', letterSpacing: 1.4 }}>ሳራ · ጎልድ</ThemedText>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-          <ThemedText type="headline" numberOfLines={1} style={{ color: '#FFFFFF', flexShrink: 1 }}>{name}</ThemedText>
-          <View style={{ width: 23, height: 23, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8C882' }}>
-            <SymbolView name={{ ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' }} size={16} tintColor="#172222" />
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md }}>
+          <View style={{ flex: 1, minWidth: 0, gap: Spacing.sm }}>
+            <ProfileAvatar size={ControlSize.avatar} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              <ThemedText type="headline" numberOfLines={1} style={{ color: '#FFFFFF', flexShrink: 1 }}>{name}</ThemedText>
+              <View style={{ width: 25, height: 25, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8C882' }}>
+                <SymbolView name={{ ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' }} size={17} tintColor="#172222" />
+              </View>
+            </View>
           </View>
+          <ThemedText type="caption" style={{ color: '#E8C882', maxWidth: '35%', textAlign: 'right' }}>ሳራ · ጎልድ</ThemedText>
         </View>
         {options ? (
-          <View style={{ flexDirection: 'row', gap: Spacing.sm }}>
+          <View style={{ flexDirection: fontScale > 1.2 ? 'column' : 'row', gap: Spacing.sm }}>
             {(['monthly', 'annual'] as const).map((period) => (
               <Pressable
                 key={period}
@@ -166,49 +177,49 @@ export default function GoldScreen() {
                 style={({ pressed }) => ({
                   flex: 1,
                   minWidth: 0,
-                  minHeight: 53,
+                  minHeight: ControlSize.touch,
+                  paddingHorizontal: Spacing.sm,
+                  paddingVertical: Spacing.sm,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: Radius.md,
+                  borderRadius: Radius.full,
                   backgroundColor: pressed ? '#D9BB79' : '#F0D69E',
                   opacity: busy ? 0.6 : 1,
                 })}>
-                <ThemedText type="caption" style={{ color: '#172222', fontWeight: '700' }}>
-                  {period === 'monthly' ? 'ወርሓዊ' : 'ዓመታዊ'}
-                </ThemedText>
-                <ThemedText type="caption" numberOfLines={1} style={{ color: '#172222', fontSize: 11 }}>
+                <ThemedText type="small" style={{ color: '#172222', textAlign: 'center' }}>
                   {price(options[period], period)}
                 </ThemedText>
               </Pressable>
             ))}
           </View>
         ) : (
-          <View style={{ minHeight: 53, justifyContent: 'center' }}>
+          <View style={{ minHeight: ControlSize.touch, justifyContent: 'center' }}>
             {loading ? <ActivityIndicator color="#E8C882" /> : <ThemedText type="caption" style={{ color: '#E8C882' }}>ዋጋ ሕጂ ኣይተረኽበን</ThemedText>}
           </View>
         )}
       </View>
 
+      <ThemedText type="caption" themeColor="textSecondary" style={{ maxWidth: cardWidth, textAlign: 'center' }}>ብዘይ ማስታወቂያ · ዘይተወሰኑ ሕቶታት</ThemedText>
       {twoMonthsIncluded ? (
-        <ThemedText type="caption" style={{ color: '#98732E' }}>ዓመታዊ: ምስ ወርሓዊ ዋጋ ክነጻጸር ከሎ፡ 2 ወርሒ ብነጻ</ThemedText>
+        <ThemedText type="caption" themeColor="textSecondary">ዓመታዊ፡ 2 ወርሒ ብነጻ</ThemedText>
       ) : null}
-      {message ? <ThemedText type="body" themeColor="textSecondary" style={{ textAlign: 'center' }}>{message}</ThemedText> : null}
+      {message ? <ThemedText type="body" themeColor="textSecondary" style={{ maxWidth: cardWidth, textAlign: 'center' }}>{message}</ThemedText> : null}
       {!loading && !options ? (
-        <Pressable accessibilityRole="button" onPress={() => load(() => mounted.current)}>
+        <Pressable accessibilityRole="button" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => load(() => mounted.current)}>
           <ThemedText type="label" themeColor="accent">እንደገና ፈትን</ThemedText>
         </Pressable>
       ) : null}
-      <Pressable accessibilityRole="button" disabled={busy || loading} onPress={() => { void restore(); }}>
+      <Pressable accessibilityRole="button" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: busy || loading || pressed ? 0.6 : 1 })} disabled={busy || loading} onPress={() => { void restore(); }}>
         <ThemedText type="label" themeColor="accent">ግዝኢት መልስ</ThemedText>
       </Pressable>
       <ThemedText type="caption" themeColor="textSecondary" style={{ maxWidth: cardWidth, textAlign: 'center' }}>
         ግዝኢትካ ባዕልኻ እንተዘይሰሪዝካዮ ይሕደስ። ዋጋ ካብ App Store ይርአ።
       </ThemedText>
-      <View style={{ flexDirection: 'row', gap: Spacing.lg }}>
-        <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL(TERMS_OF_USE_URL); }}>
+      <View style={{ maxWidth: cardWidth, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', columnGap: Spacing.lg, rowGap: Spacing.xs }}>
+        <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => { void Linking.openURL(TERMS_OF_USE_URL); }}>
           <ThemedText type="caption" themeColor="textSecondary" style={{ textDecorationLine: 'underline' }}>ናይ ኣጠቓቕማ ውዕል</ThemedText>
         </Pressable>
-        <Pressable accessibilityRole="link" onPress={() => router.push('/privacy')}>
+        <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => router.push('/privacy')}>
           <ThemedText type="caption" themeColor="textSecondary" style={{ textDecorationLine: 'underline' }}>ፖሊሲ ብሕትውና</ThemedText>
         </Pressable>
       </View>

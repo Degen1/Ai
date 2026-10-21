@@ -1,10 +1,12 @@
 import { Image } from 'expo-image';
 import { View } from 'react-native';
 
+import { AssistantMark } from '@/components/assistant-mark';
+import { ReportResponse } from '@/components/report-response';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import type { ChatMessage } from '@/data/chat-data';
+import { useTheme } from '@/hooks/use-theme';
 
 export function MessageRow({ message }: { message: ChatMessage }) {
   const theme = useTheme();
@@ -36,7 +38,7 @@ export function MessageRow({ message }: { message: ChatMessage }) {
             style={{
               paddingHorizontal: Spacing.md,
               paddingVertical: Spacing.twoHalf,
-              borderRadius: Radius.full,
+              borderRadius: Radius.lg, borderCurve: 'continuous',
               backgroundColor: theme.backgroundElement,
             }}>
             <ThemedText type="body" selectable>
@@ -56,18 +58,15 @@ export function MessageRow({ message }: { message: ChatMessage }) {
         alignSelf: 'center',
         flexDirection: 'row',
         alignItems: 'flex-start',
-        gap: Spacing.twoHalf,
+        gap: Spacing.sm,
         paddingHorizontal: Spacing.md,
       }}>
-      <Image
-        source={require('../../assets/images/sara-lips.png')}
-        contentFit="cover"
-        style={{ width: 36, height: 30 }}
-      />
-      <View style={{ flex: 1, paddingTop: 2 }}>
+      <AssistantMark />
+      <View style={{ flex: 1 }}>
         <ThemedText type="body" selectable>
           {message.content}
         </ThemedText>
+        <ReportResponse key={message.id} response={message.content} />
       </View>
     </View>
   );

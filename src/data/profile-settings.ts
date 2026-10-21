@@ -2,11 +2,8 @@ import { File, Paths } from 'expo-file-system';
 import { useSyncExternalStore } from 'react';
 import { Platform } from 'react-native';
 
-export type ThemePreference = 'system' | 'light' | 'dark';
-
 type ProfileSettings = {
   profiles: Record<string, AccountProfile>;
-  theme: ThemePreference;
 };
 
 type AccountProfile = {
@@ -16,7 +13,7 @@ type AccountProfile = {
 
 const storageName = 'sara-profile-v1';
 const emptyProfile: AccountProfile = { avatar: null, displayName: null };
-const defaultSettings: ProfileSettings = { profiles: {}, theme: 'system' };
+const defaultSettings: ProfileSettings = { profiles: {} };
 const listeners = new Set<() => void>();
 
 function readSettings(): ProfileSettings {
@@ -41,10 +38,7 @@ function readSettings(): ProfileSettings {
         };
       }
     }
-    return {
-      profiles,
-      theme: data.theme === 'light' || data.theme === 'dark' ? data.theme : 'system',
-    };
+    return { profiles };
   } catch {
     return defaultSettings;
   }
@@ -80,10 +74,6 @@ export function useProfileSettings() {
 export function useAccountProfile(userId: string | null) {
   const { profiles } = useProfileSettings();
   return userId ? profiles[userId] ?? emptyProfile : emptyProfile;
-}
-
-export function setThemePreference(theme: ThemePreference) {
-  saveSettings({ ...settings, theme });
 }
 
 export function setProfileDisplayName(userId: string, displayName: string) {

@@ -4,10 +4,11 @@ import { SymbolView } from 'expo-symbols';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ConversationList } from '@/components/conversation-list';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type HistoryDrawerProps = {
+  adsVisible?: boolean;
   onClose: () => void;
   onDelete: (id: string) => void;
   onNewChat: () => void;
@@ -16,7 +17,7 @@ type HistoryDrawerProps = {
   width: number;
 };
 
-export function HistoryDrawer({ onClose, onDelete, onNewChat, onSelect, progress, width }: HistoryDrawerProps) {
+export function HistoryDrawer({ adsVisible = true, onClose, onDelete, onNewChat, onSelect, progress, width }: HistoryDrawerProps) {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const drawerStyle = useAnimatedStyle(() => ({
@@ -41,7 +42,7 @@ export function HistoryDrawer({ onClose, onDelete, onNewChat, onSelect, progress
         },
         drawerStyle,
       ]}>
-      <ConversationList compact onDelete={onDelete} onSelect={onSelect} />
+      <ConversationList adsVisible={adsVisible} compact onDelete={onDelete} onSelect={onSelect} />
       <Pressable
         accessibilityLabel="ሓድሽ ዕላል ጀምር"
         accessibilityRole="button"
@@ -51,9 +52,9 @@ export function HistoryDrawer({ onClose, onDelete, onNewChat, onSelect, progress
           position: 'absolute',
           right: Spacing.md,
           bottom: Math.max(insets.bottom, Spacing.md) + Spacing.md,
-          width: 58,
-          height: 58,
-          borderRadius: 29,
+          width: 52,
+          height: 52,
+          borderRadius: Radius.full,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: theme.primaryAction,
