@@ -1,10 +1,10 @@
 import { router } from 'expo-router';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 
 import { AuthModeSwitcher } from '@/components/auth-mode-switcher';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { ControlSize, FormInputStyle, ProfileCardMaxWidth, Radius, Spacing } from '@/constants/theme';
 import { setProfileDisplayName } from '@/data/profile-settings';
 import { useAuthSession } from '@/hooks/use-auth-session';
 import { useTheme } from '@/hooks/use-theme';
@@ -19,11 +19,11 @@ function authErrorMessage(error: unknown) {
   switch (code) {
     case 'auth/email-already-in-use': return 'እዚ ኢመይል ድሮ ተመዝጊቡ ኣሎ።';
     case 'auth/invalid-email': return 'ቅኑዕ ኢመይል ኣእቱ።';
-    case 'auth/weak-password': return 'ዝሓየለ ምስጢራዊ ቃል ምረጽ።';
+    case 'auth/weak-password': return 'ዝሓየለ መፍትሕ ምረጽ።';
     case 'auth/invalid-credential':
     case 'auth/invalid-login-credentials':
     case 'auth/user-not-found':
-    case 'auth/wrong-password': return 'ኢመይል ወይ ምስጢራዊ ቃል ቅኑዕ ኣይኮነን።';
+    case 'auth/wrong-password': return 'ኢመይል ወይ መፍትሕ ቅኑዕ ኣይኮነን።';
     case 'auth/too-many-requests': return 'ብዙሕ ግዜ ተፈቲኑ። ቍሩብ ጸኒሕካ ፈትን።';
     case 'auth/operation-not-allowed': return 'መእተዊ ሕጂ ኣይተዳለወን። ድሕሪ ግዜ ፈትን።';
     case 'auth/network-request-failed': return 'መርበብካ ፈትሽ እሞ እንደገና ፈትን።';
@@ -33,6 +33,10 @@ function authErrorMessage(error: unknown) {
 
 export default function AuthScreen() {
   const theme = useTheme();
+  const { width: windowWidth } = useWindowDimensions();
+  const [sheetWidth, setSheetWidth] = useState(windowWidth);
+  const contentInset = Math.max(Spacing.lg, (sheetWidth - ProfileCardMaxWidth) / 2);
+  const contentWidth = Math.max(0, sheetWidth - contentInset * 2);
   const { status } = useAuthSession();
   const [mode, setMode] = useState<Mode>('login');
   const [name, setName] = useState('');
@@ -57,11 +61,11 @@ export default function AuthScreen() {
       return;
     }
     if (!normalizedEmail || !password) {
-      setError('ኢመይልን ምስጢራዊ ቃልን ኣእቱ።');
+      setError('ኢመይልን መፍትሕን ኣእቱ።');
       return;
     }
     if (mode === 'register' && password.length < 6) {
-      setError('ምስጢራዊ ቃል ብውሑዱ 6 ፊደላት ይኹን።');
+      setError('መፍትሕ ብውሑዱ 6 ፊደላት ይኹን።');
       return;
     }
     setBusy(true);
@@ -98,7 +102,7 @@ export default function AuthScreen() {
     setNotice(null);
     try {
       await resetPassword(normalizedEmail);
-      setNotice('ናይ ምስጢራዊ ቃል መሕደሲ ኢመይል ተላኢኹ።');
+      setNotice('ናይ መፍትሕ መሕደሲ ኢመይል ተላኢኹ።');
     } catch (nextError) {
       setError(authErrorMessage(nextError));
     } finally {
@@ -109,13 +113,14 @@ export default function AuthScreen() {
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      onLayout={({ nativeEvent }) => setSheetWidth(nativeEvent.layout.width)}
       style={{ flex: 1, backgroundColor: theme.background }}>
       <ScrollView
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, padding: Spacing.lg, alignItems: 'center' }}>
-        <View style={{ width: '100%', maxWidth: 420, gap: Spacing.lg, paddingTop: Spacing.xl }}>
-          <AuthModeSwitcher mode={mode} onChange={changeMode} isDisabled={busy} />
+        contentContainerStyle={{ flexGrow: 1, paddingHorizontal: contentInset, paddingTop: contentInset, paddingBottom: Spacing.lg, alignItems: 'center' }}>
+        <View style={{ width: '100%', maxWidth: ProfileCardMaxWidth, gap: Spacing.lg }}>
+          <AuthModeSwitcher mode={mode} onChange={changeMode} isDisabled={busy} width={contentWidth} />
 
           <View style={{ gap: Spacing.md }}>
             {mode === 'register' ? (
@@ -127,7 +132,7 @@ export default function AuthScreen() {
                 placeholderTextColor={theme.textSecondary}
                 value={name}
                 onChangeText={setName}
-                style={{ minHeight: 52, paddingHorizontal: Spacing.md, borderRadius: Radius.md, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, color: theme.text, fontSize: 17 }}
+                style={{ ...FormInputStyle, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, color: theme.text }}
               />
             ) : null}
             <TextInput
@@ -139,18 +144,18 @@ export default function AuthScreen() {
               placeholderTextColor={theme.textSecondary}
               value={email}
               onChangeText={setEmail}
-              style={{ minHeight: 52, paddingHorizontal: Spacing.md, borderRadius: Radius.md, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, color: theme.text, fontSize: 17 }}
+              style={{ ...FormInputStyle, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, color: theme.text }}
             />
             <TextInput
-              accessibilityLabel="ምስጢራዊ ቃል"
+              accessibilityLabel="መፍትሕ"
               autoCapitalize="none"
               autoCorrect={false}
               secureTextEntry
-              placeholder="ምስጢራዊ ቃል"
+              placeholder="መፍትሕ"
               placeholderTextColor={theme.textSecondary}
               value={password}
               onChangeText={setPassword}
-              style={{ minHeight: 52, paddingHorizontal: Spacing.md, borderRadius: Radius.md, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, color: theme.text, fontSize: 17 }}
+              style={{ ...FormInputStyle, backgroundColor: theme.surface, borderWidth: 1, borderColor: theme.border, color: theme.text }}
             />
           </View>
 
@@ -165,15 +170,15 @@ export default function AuthScreen() {
             accessibilityState={{ disabled: busy }}
             disabled={busy}
             onPress={() => { void submit(); }}
-            style={({ pressed }) => ({ minHeight: 52, borderRadius: Radius.full, backgroundColor: theme.primaryAction, alignItems: 'center', justifyContent: 'center', opacity: busy || pressed ? 0.7 : 1 })}>
+            style={({ pressed }) => ({ minHeight: ControlSize.field, padding: Spacing.twoHalf, borderRadius: Radius.full, backgroundColor: theme.primaryAction, alignItems: 'center', justifyContent: 'center', opacity: busy || pressed ? 0.7 : 1 })}>
             <ThemedText type="label" style={{ color: theme.primaryActionText }}>
               {busy ? 'በጃኻ ተጸበ…' : mode === 'login' ? 'እቶ' : 'ተመዝገብ'}
             </ThemedText>
           </Pressable>
 
           {mode === 'login' ? (
-            <Pressable accessibilityRole="button" disabled={busy} onPress={() => { void sendReset(); }} style={{ alignSelf: 'center', padding: Spacing.sm }}>
-              <ThemedText type="label" themeColor="accent">ምስጢራዊ ቃል ረሲዕካዮ?</ThemedText>
+            <Pressable accessibilityRole="button" disabled={busy} onPress={() => { void sendReset(); }} style={({ pressed }) => ({ alignSelf: 'center', minHeight: ControlSize.touch, justifyContent: 'center', padding: Spacing.sm, opacity: pressed ? 0.6 : 1 })}>
+              <ThemedText type="label" themeColor="accent">መፍትሕ ረሲዕካዮ?</ThemedText>
             </Pressable>
           ) : null}
         </View>

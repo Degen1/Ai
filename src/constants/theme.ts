@@ -5,7 +5,10 @@
 
 import '@/global.css';
 
-import { Platform } from 'react-native';
+import { Platform, type TextStyle } from 'react-native';
+
+export const AppFontFamily = 'AbyssinicaSIL';
+export const AppFontNativeFamily = Platform.OS === 'ios' ? 'AbyssinicaSIL-Regular' : AppFontFamily;
 
 export const Colors = {
   light: {
@@ -27,6 +30,7 @@ export const Colors = {
     primaryAction: '#11110F',
     primaryActionText: '#FFFFFF',
     danger: '#C93C37',
+    assistantMark: '#2788F8',
   },
   dark: {
     text: '#F5F4EF',
@@ -47,6 +51,7 @@ export const Colors = {
     primaryAction: '#F5F4EF',
     primaryActionText: '#171714',
     danger: '#FF8D86',
+    assistantMark: '#2788F8',
   },
 } as const;
 
@@ -55,7 +60,7 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 export const Fonts = Platform.select({
   ios: {
     /** iOS `UIFontDescriptorSystemDesignDefault` */
-    sans: 'system-ui',
+    sans: AppFontFamily,
     /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: 'ui-serif',
     /** iOS `UIFontDescriptorSystemDesignRounded` */
@@ -64,13 +69,13 @@ export const Fonts = Platform.select({
     mono: 'ui-monospace',
   },
   default: {
-    sans: 'normal',
+    sans: AppFontFamily,
     serif: 'serif',
     rounded: 'normal',
     mono: 'monospace',
   },
   web: {
-    sans: 'var(--font-display)',
+    sans: AppFontFamily,
     serif: 'var(--font-serif)',
     rounded: 'var(--font-rounded)',
     mono: 'var(--font-mono)',
@@ -110,3 +115,28 @@ export const Shadows = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+export const ProfileCardMaxWidth = 380;
+
+// Abyssinica has tall Ethiopic glyphs; keep enough leading at every text size.
+export const Typography = {
+  title: { fontSize: 28, lineHeight: 40 },
+  subtitle: { fontSize: 24, lineHeight: 34 },
+  headline: { fontSize: 18, lineHeight: 26 },
+  body: { fontSize: 16, lineHeight: 26 },
+  label: { fontSize: 15, lineHeight: 22 },
+  small: { fontSize: 14, lineHeight: 22 },
+  caption: { fontSize: 12, lineHeight: 18 },
+} as const satisfies Record<string, TextStyle>;
+
+export const ControlSize = { touch: 44, field: 52, toolbar: 56, avatar: 64 } as const;
+export const MembershipCard = { aspectRatio: 1.586, radius: 22 } as const;
+
+export const FormInputStyle = {
+  fontFamily: AppFontFamily,
+  fontSize: Typography.body.fontSize,
+  minHeight: ControlSize.field,
+  paddingHorizontal: Spacing.md,
+  paddingVertical: Spacing.twoHalf,
+  borderRadius: Radius.md,
+  borderCurve: 'continuous',
+} as const;

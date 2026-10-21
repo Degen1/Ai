@@ -1,3 +1,5 @@
+import { useAds } from '@/hooks/use-ads';
+import { AdBanner } from '@/components/ad-banner';
 import { router } from 'expo-router';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
@@ -11,9 +13,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { AccountInformation } from '@/components/account-information';
 import { ProfileAvatar } from '@/components/profile-avatar';
-import { ThemeSwitcher } from '@/components/theme-switcher';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { ControlSize, FormInputStyle, MembershipCard, ProfileCardMaxWidth, Radius, Spacing } from '@/constants/theme';
 import { TERMS_OF_USE_URL } from '@/constants/legal';
 import { SUPPORT_EMAIL } from '@/constants/privacy-policy';
 import { clearAccountProfile, removeProfileAvatar, saveProfileAvatar, setProfileDisplayName, useAccountProfile } from '@/data/profile-settings';
@@ -24,6 +25,7 @@ import { deleteAccount, logout, updateAccountName } from '@/services/auth-servic
 import { getGoldStatus, subscribeGoldStatus } from '@/services/gold-subscription';
 
 type ProfileDrawerProps = {
+  adsVisible?: boolean;
   onClose: () => void;
   progress: SharedValue<number>;
   width: number;
@@ -31,7 +33,8 @@ type ProfileDrawerProps = {
 
 type PendingAvatar = { uri: string; base64: string };
 
-export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) {
+export function ProfileDrawer({ adsVisible = true, onClose, progress, width }: ProfileDrawerProps) {
+  const ads = useAds();
   const insets = useSafeAreaInsets();
   const colorScheme = useAppColorScheme();
   const theme = useTheme();
@@ -45,7 +48,7 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gold, setGold] = useState(false);
-  const cardWidth = width - Spacing.md * 2;
+  const cardWidth = Math.min(width - Spacing.md * 2, ProfileCardMaxWidth);
   let glassAvailable = false;
   if (Platform.OS === 'ios') {
     try {
@@ -77,7 +80,7 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
 
   const openModal = (path: '/auth' | '/gold' | '/privacy') => {
     cancelEditing();
-    onClose();
+    if (path !== '/gold') onClose();
     router.push(path);
   };
 
@@ -218,182 +221,192 @@ export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) 
           paddingBottom: Math.max(insets.bottom, Spacing.md) + Spacing.lg,
           paddingHorizontal: Spacing.md,
           gap: Spacing.lg,
+          alignItems: 'center',
         }}>
         <ProfileCard
           {...(glassAvailable ? { glassEffectStyle: 'regular' as const, colorScheme } : {})}
           style={{
             width: cardWidth,
-            aspectRatio: 1.586,
+            minHeight: cardWidth / MembershipCard.aspectRatio,
+            gap: Spacing.md,
             justifyContent: 'space-between',
             padding: Spacing.threeHalf,
-            borderRadius: 22,
+            borderRadius: MembershipCard.radius,
+            borderCurve: 'continuous',
             backgroundColor: glassAvailable ? undefined : theme.surface,
             borderWidth: 1,
             borderColor: glassAvailable ? theme.glassBorder : theme.border,
           }}>
-          {editing && user ? (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
-              <View style={{ width: 72, height: 72 }}>
-                <Pressable
-                  accessibilityLabel="ስእሊ መገለጺ ቀይር"
-                  accessibilityRole="button"
-                  accessibilityState={{ disabled: pickingPhoto || busy }}
-                  disabled={pickingPhoto || busy}
-                  onPress={() => { void pickAvatar(); }}
-                  style={({ pressed }) => ({ width: 72, height: 72, opacity: pressed ? 0.7 : 1 })}>
-                  {removeAvatar ? (
-                    <View style={{ width: 68, height: 68, borderRadius: 34, backgroundColor: theme.backgroundElement, alignItems: 'center', justifyContent: 'center' }}>
-                      <SymbolView name={{ ios: 'person', android: 'person_outline', web: 'person_outline' }} size={30} tintColor={theme.text} />
-                    </View>
-                  ) : <ProfileAvatar size={68} previewUri={pendingAvatar?.uri} />}
-                  <View style={{
-                    position: 'absolute',
-                    bottom: 0,
-                    right: 0,
-                    width: 24,
-                    height: 24,
-                    borderRadius: 12,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    backgroundColor: theme.primaryAction,
-                  }}>
-                    <SymbolView name={{ ios: 'pencil', android: 'edit', web: 'edit' }} size={13} tintColor={theme.primaryActionText} />
-                  </View>
-                </Pressable>
-                {(pendingAvatar || avatar) && !removeAvatar ? (
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: Spacing.md }}>
+            <View style={{ flex: 1, minWidth: 0, gap: Spacing.sm }}>
+              {editing && user ? (
+                <View style={{ width: 72, height: 72 }}>
                   <Pressable
-                    accessibilityLabel="ስእሊ መገለጺ ሰርዝ"
+                    accessibilityLabel="ስእሊ መገለጺ ቀይር"
                     accessibilityRole="button"
                     accessibilityState={{ disabled: pickingPhoto || busy }}
                     disabled={pickingPhoto || busy}
-                    hitSlop={10}
-                    onPress={() => { setPendingAvatar(null); setRemoveAvatar(true); }}
-                    style={{ position: 'absolute', top: -6, right: -6, width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center' }}>
-                    <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={12} tintColor={theme.text} />
+                    onPress={() => { void pickAvatar(); }}
+                    style={({ pressed }) => ({ width: 72, height: 72, opacity: pressed ? 0.7 : 1 })}>
+                    {removeAvatar ? (
+                      <View style={{ width: ControlSize.avatar, height: ControlSize.avatar, borderRadius: Radius.full, backgroundColor: theme.backgroundElement, alignItems: 'center', justifyContent: 'center' }}>
+                        <SymbolView name={{ ios: 'person', android: 'person_outline', web: 'person_outline' }} size={30} tintColor={theme.text} />
+                      </View>
+                    ) : <ProfileAvatar size={ControlSize.avatar} previewUri={pendingAvatar?.uri} />}
+                    <View style={{
+                      position: 'absolute',
+                      bottom: 0,
+                      right: 0,
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: theme.primaryAction,
+                    }}>
+                      <SymbolView name={{ ios: 'pencil', android: 'edit', web: 'edit' }} size={13} tintColor={theme.primaryActionText} />
+                    </View>
                   </Pressable>
-                ) : null}
-              </View>
-              <Pressable accessibilityLabel="ኣርም ሰርዝ" accessibilityRole="button" onPress={cancelEditing} hitSlop={8}>
-                <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={18} tintColor={theme.textSecondary} />
+                  {(pendingAvatar || avatar) && !removeAvatar ? (
+                    <Pressable
+                      accessibilityLabel="ስእሊ መገለጺ ሰርዝ"
+                      accessibilityRole="button"
+                      accessibilityState={{ disabled: pickingPhoto || busy }}
+                      disabled={pickingPhoto || busy}
+                      hitSlop={10}
+                      onPress={() => { setPendingAvatar(null); setRemoveAvatar(true); }}
+                      style={{ position: 'absolute', top: -6, right: -6, width: 24, height: 24, borderRadius: 12, borderWidth: 1, borderColor: theme.border, backgroundColor: theme.surface, alignItems: 'center', justifyContent: 'center' }}>
+                      <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={12} tintColor={theme.text} />
+                    </Pressable>
+                  ) : null}
+                </View>
+              ) : <ProfileAvatar size={ControlSize.avatar} />}
+              {editing && user ? (
+                <TextInput
+                  accessibilityLabel="ስምካ ኣርም"
+                  autoCapitalize="words"
+                  autoCorrect={false}
+                  maxLength={40}
+                  onChangeText={setNameDraft}
+                  onSubmitEditing={() => { void saveProfile(); }}
+                  placeholder="ስምካ"
+                  placeholderTextColor={theme.textSecondary}
+                  returnKeyType="done"
+                  value={nameDraft}
+                  style={{
+                    width: '100%',
+                    minWidth: 0,
+                    ...FormInputStyle,
+                    minHeight: ControlSize.touch,
+                    paddingHorizontal: Spacing.sm,
+                    paddingVertical: Spacing.sm,
+                    backgroundColor: theme.backgroundElement,
+                    color: theme.text,
+                  }}
+                />
+              ) : (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+                  <ThemedText type="headline" numberOfLines={1} style={{ flexShrink: 1 }}>
+                    {user ? displayName || user.displayName || 'ስምካ ወስኽ' : 'ተጠቃሚ'}
+                  </ThemedText>
+                  {user && gold ? (
+                    <View
+                      accessibilityLabel="ሳራ ጎልድ ንጡፍ"
+                      style={{ width: 25, height: 25, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8C882' }}>
+                      <SymbolView name={{ ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' }} size={17} tintColor="#172222" />
+                    </View>
+                  ) : null}
+                </View>
+              )}
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
+              {editing && user ? (
+                <Pressable accessibilityLabel="ኣርም ሰርዝ" accessibilityRole="button" onPress={cancelEditing} hitSlop={8} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
+                  <SymbolView name={{ ios: 'xmark', android: 'close', web: 'close' }} size={18} tintColor={theme.textSecondary} />
+                </Pressable>
+              ) : null}
+              <Pressable
+                accessibilityLabel="ሳራ ጎልድ ርአ"
+                accessibilityRole="button"
+                onPress={() => openModal('/gold')}
+                style={({ pressed }) => ({
+                  width: ControlSize.touch,
+                  height: ControlSize.touch,
+                  borderRadius: Radius.full,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: gold ? '#E8C882' : theme.glass,
+                  borderWidth: 1,
+                  borderColor: gold ? '#E8C882' : theme.glassBorder,
+                  opacity: pressed ? 0.7 : 1,
+                })}>
+                <SymbolView
+                  name={{ ios: gold ? 'crown.fill' : 'crown', android: 'workspace_premium', web: 'workspace_premium' }}
+                  size={20}
+                  tintColor={gold ? '#172222' : theme.text}
+                />
               </Pressable>
             </View>
-          ) : <ProfileAvatar size={68} />}
-
-          <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.sm }}>
-            {editing && user ? (
-              <TextInput
-                accessibilityLabel="ስምካ ኣርም"
-                autoCapitalize="words"
-                autoCorrect={false}
-                maxLength={40}
-                onChangeText={setNameDraft}
-                onSubmitEditing={() => { void saveProfile(); }}
-                placeholder="ስምካ"
-                placeholderTextColor={theme.textSecondary}
-                returnKeyType="done"
-                value={nameDraft}
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  height: 40,
-                  paddingHorizontal: Spacing.two,
-                  borderRadius: Radius.sm,
-                  backgroundColor: theme.backgroundElement,
-                  color: theme.text,
-                  fontSize: 17,
-                }}
-              />
-            ) : (
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: Spacing.sm }}>
-                <ThemedText type="headline" numberOfLines={1} style={{ flexShrink: 1 }}>
-                  {user ? displayName || user.displayName || 'ስምካ ወስኽ' : 'መገለጺኻ'}
-                </ThemedText>
-                {user && gold ? (
-                  <View
-                    accessibilityLabel="ሳራ ጎልድ ንጡፍ"
-                    style={{ width: 25, height: 25, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: '#E8C882' }}>
-                    <SymbolView name={{ ios: 'checkmark.seal.fill', android: 'verified', web: 'verified' }} size={17} tintColor="#172222" />
-                  </View>
-                ) : null}
-              </View>
-            )}
-            <Pressable
-              accessibilityLabel={editing ? 'መገለጺ ዓቅብ' : user ? 'መገለጺ ኣርም' : 'እቶ'}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: status === 'loading' || busy || pickingPhoto }}
-              disabled={status === 'loading' || busy || pickingPhoto}
-              onPress={() => {
-                if (editing) void saveProfile();
-                else if (user) startEditing();
-                else openModal('/auth');
-              }}
-              style={({ pressed }) => ({
-                minWidth: 66,
-                paddingHorizontal: Spacing.twoHalf,
-                paddingVertical: Spacing.two,
-                borderRadius: Radius.full,
-                alignItems: 'center',
-                backgroundColor: theme.primaryAction,
-                opacity: pressed ? 0.75 : 1,
-              })}>
-              <ThemedText type="label" style={{ color: theme.primaryActionText }}>
-                {status === 'loading' || busy ? '…' : editing ? 'ዓቅብ' : user ? 'ኣርም' : 'እቶ'}
-              </ThemedText>
-            </Pressable>
           </View>
+
+          <Pressable
+            accessibilityLabel={editing ? 'መገለጺ ዓቅብ' : user ? 'መገለጺ ኣርም' : 'እቶ'}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: status === 'loading' || busy || pickingPhoto }}
+            disabled={status === 'loading' || busy || pickingPhoto}
+            onPress={() => {
+              if (editing) void saveProfile();
+              else if (user) startEditing();
+              else openModal('/auth');
+            }}
+            style={({ pressed }) => ({
+              alignSelf: 'stretch',
+              minHeight: ControlSize.touch,
+              justifyContent: 'center',
+              paddingHorizontal: Spacing.md,
+              paddingVertical: Spacing.two,
+              borderRadius: Radius.full,
+              alignItems: 'center',
+              backgroundColor: theme.primaryAction,
+              opacity: status === 'loading' || busy || pickingPhoto ? 0.5 : pressed ? 0.75 : 1,
+            })}>
+            <ThemedText type="label" style={{ color: theme.primaryActionText }}>
+              {status === 'loading' || busy ? '…' : editing ? 'ዓቅብ' : user ? 'ኣርም' : 'እቶ'}
+            </ThemedText>
+          </Pressable>
         </ProfileCard>
         {error ? <ThemedText type="caption" themeColor="danger">{error}</ThemedText> : null}
-
-        <View style={{ gap: Spacing.sm }}>
-          <ThemedText type="label" themeColor="textSecondary" style={{ paddingHorizontal: Spacing.xs }}>መልክዕ</ThemedText>
-          <ThemeSwitcher width={cardWidth} />
-        </View>
-
-        <Pressable
-          accessibilityLabel="ግዝኢታት ርአ"
-          accessibilityRole="button"
-          onPress={() => openModal('/gold')}
-          style={({ pressed }) => ({
-            width: cardWidth,
-            minHeight: 58,
-            paddingHorizontal: Spacing.md,
-            borderRadius: Radius.lg,
-            backgroundColor: theme.surface,
-            borderWidth: 1,
-            borderColor: theme.border,
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: Spacing.twoHalf,
-            opacity: pressed ? 0.72 : 1,
-          })}>
-          <SymbolView name={{ ios: 'sparkles', android: 'auto_awesome', web: 'auto_awesome' }} size={22} tintColor={theme.text} />
-          <ThemedText type="label" style={{ flex: 1 }}>ግዝኢታት</ThemedText>
-          <SymbolView name={{ ios: 'chevron.right', android: 'chevron_right', web: 'chevron_right' }} size={18} tintColor={theme.textSecondary} />
-        </Pressable>
 
         {user ? (
           <View style={{ width: cardWidth, gap: Spacing.sm }}>
             <ThemedText type="label" themeColor="textSecondary" style={{ paddingHorizontal: Spacing.xs }}>መለለዪ</ThemedText>
             <AccountInformation email={user.email} />
-            <Pressable accessibilityRole="button" disabled={busy} onPress={() => { void signOut(); }} style={{ padding: Spacing.md, borderRadius: Radius.lg, backgroundColor: theme.surface }}>
+            <View style={{ borderRadius: Radius.lg, borderCurve: 'continuous', backgroundColor: theme.surface, overflow: 'hidden' }}>
+            <Pressable accessibilityRole="button" disabled={busy} onPress={() => { void signOut(); }} style={({ pressed }) => ({ minHeight: ControlSize.field, justifyContent: 'center', padding: Spacing.md, borderRadius: Radius.lg, borderCurve: 'continuous', backgroundColor: theme.surface, opacity: busy || pressed ? 0.6 : 1 })}>
               <ThemedText type="label">ውጻእ</ThemedText>
             </Pressable>
-            <Pressable accessibilityRole="button" disabled={busy} onPress={confirmDelete} style={{ padding: Spacing.md, borderRadius: Radius.lg, backgroundColor: theme.surface }}>
+            <View style={{ height: 1, marginHorizontal: Spacing.md, backgroundColor: theme.border }} />
+            <Pressable accessibilityRole="button" disabled={busy} onPress={confirmDelete} style={({ pressed }) => ({ minHeight: ControlSize.field, justifyContent: 'center', padding: Spacing.md, borderRadius: Radius.lg, borderCurve: 'continuous', backgroundColor: theme.surface, opacity: busy || pressed ? 0.6 : 1 })}>
               <ThemedText type="label" themeColor="danger">መለለዪ ሰርዝ</ThemedText>
             </Pressable>
+            </View>
           </View>
         ) : null}
-        <View style={{ width: cardWidth, flexDirection: 'row', gap: Spacing.lg, paddingHorizontal: Spacing.xs }}>
-          <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL(TERMS_OF_USE_URL); }}>
+        <View style={{ width: cardWidth, flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.md, rowGap: Spacing.xs, paddingHorizontal: Spacing.xs }}>
+          <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => { void Linking.openURL(TERMS_OF_USE_URL); }}>
             <ThemedText type="caption" themeColor="textSecondary">ናይ ኣጠቓቕማ ውዕል</ThemedText>
           </Pressable>
-          <Pressable accessibilityRole="link" onPress={() => openModal('/privacy')}>
+          <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => openModal('/privacy')}>
             <ThemedText type="caption" themeColor="textSecondary">ፖሊሲ ብሕትውና</ThemedText>
           </Pressable>
-          <Pressable accessibilityRole="link" onPress={() => { void Linking.openURL(`mailto:${SUPPORT_EMAIL}`); }}>
+          <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => { void Linking.openURL(`mailto:${SUPPORT_EMAIL}`); }}>
             <ThemedText type="caption" themeColor="textSecondary">ሓገዝ</ThemedText>
           </Pressable>
         </View>
+        {ads.privacyRequired ? <Pressable accessibilityRole="button" onPress={() => { void ads.showPrivacyOptions(); }} style={{ minHeight: 44, justifyContent: 'center' }}>
+          <ThemedText type="caption" themeColor="textSecondary">ምርጫታት ብሕትውና ማስታወቂያ</ThemedText>
+        </Pressable> : null}
+        <AdBanner visible={adsVisible} />
       </ScrollView>
     </Animated.View>
   );

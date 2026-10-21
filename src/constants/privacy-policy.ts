@@ -14,12 +14,16 @@ export const PRIVACY_SECTIONS = [
     body: 'ታሪኽ ዕላልካ፣ ናብ ዕላል ዝወሰኽካዮ ስእሊ፣ ስእሊ መገለጺኻን ምርጫ መልክዕካን ኣብ መሳርሒኻ ይዕቀቡ። ኣብ መንጎ መሳርሒታት ኣይተዛመዱን። ዕላል ካብ ታሪኽ ክትሰርዞ ትኽእል። መለለዪኻ ምስ ትሰርዝ፡ ኣብ መሳርሒኻ ዘሎ ታሪኽ ዕላል በይኑ ኣይስረዝን።',
   },
   {
+    title: 'ጸብጻብ መልሲ',
+    body: 'መልሲ ክትጸብጽብ ምስ ትመርጽ፡ እቲ ዝመረጽካዮ መልስን ምኽንያትካን ንጉጅለ ሳራ ንምርመራ ኣብ Firebase Cloud Firestore ይዕቀብ። ምሉእ ታሪኽ ዕላልካ፣ ስእልታትካን ኢመይልካን ምስ ጸብጻብ ኣይለኣኹን።',
+  },
+  {
     title: 'ጎልድ ግዝኢት',
-    body: 'ጎልድ ኣማራጺ ግዝኢት እዩ። ክፍሊት ብ Apple ይስራሕ። RevenueCat ናይ ግዝኢት ታሪኽን መለለዪ ተጠቃሚን ንመሰል ኣገልግሎት ንምርግጋጽን ግዝኢት ንምምላስን ይስርሕ።',
+    body: 'ጎልድ ኣማራጺ ግዝኢት እዩ። ክፍሊት ብ Apple App Store ወይ Google Play ይስራሕ። RevenueCat ናይ ግዝኢት ታሪኽን መለለዪ ተጠቃሚን ንመሰል ኣገልግሎት ንምርግጋጽን ግዝኢት ንምምላስን ይስርሕ።',
   },
   {
     title: 'ኣገልግሎታትን ርክብን',
-    body: 'ሳራ Expo EAS Hosting፣ OpenAI፣ Firebase Authentication፣ RevenueCatን Apple App Storeን ትጥቀም። ናይ Google Mobile Ads SDK ኣብ መተግበሪ ኣሎ፡ ኣብዚ ሕጂ ግን ምልክታታት ኣይንርእይን። ብዛዕባ ሓበሬታኻ ንምሕታት ናብ degenlogistics@gmail.com ጽሓፍ።',
+    body: 'ሳራ Expo EAS Hosting፣ OpenAI፣ Firebase Authentication፣ Firebase Hosting፣ RevenueCat፣ Apple App Storeን Google Playን ትጥቀም። ንነጻ ተጠቀምቲ Google AdMob ማስታወቂያታት የቕርብ። ማስታወቂያ ብምርኣይ 2 ተወሰኽቲ ሕቶታት ክትረክብ ትኽእል። ጎልድ ማስታወቂያ የብሉን፡ ሕቶታት ድማ ዘይተወሰኑ እዮም። Google ኣድራሻ IP፣ መለለዪ መሳርሒን ኣጠቓቕማ ማስታወቂያን ክእክብ ይኽእል። ትሕዝቶ ዕላልካ ንማስታወቂያ ኣይንሰዶን። ብዝሒ ዝተረፉ ሕቶታትካ ኣብ መሳርሒኻ ይዕቀብ። ኣብ ዝምልከተሉ ዞባ፡ ምርጫታት ብሕትውና ማስታወቂያ ኣብ መገለጺኻ ክትቅይር ትኽእል። ብዛዕባ ሓበሬታኻ ንምሕታት ናብ degenlogistics@gmail.com ጽሓፍ።',
   },
 ] as const;
 
@@ -34,14 +38,18 @@ export const PRIVACY_SECTIONS_EN = [
   },
   {
     title: 'Information saved on your device',
-    body: 'Sara saves chat history, attached chat photos, your chosen profile picture, locally saved display name, and theme preference on your device. These items do not sync between devices. You can delete chats from history and remove your profile picture. Deleting your account clears its local profile information, but does not automatically erase separately stored chat history; delete those chats in history if you want to remove them.',
+    body: 'Sara saves chat history, attached chat photos, your chosen profile picture, and locally saved display name on your device. These items do not sync between devices. You can delete chats from history and remove your profile picture. Deleting your account clears its local profile information, but does not automatically erase separately stored chat history; delete those chats in history if you want to remove them.',
+  },
+  {
+    title: 'Response reports',
+    body: 'If you choose to report an AI response, Sara sends the selected response (up to 24,000 characters), your selected reason, a random report identifier, and the app platform to a Firebase Cloud Function. The report is saved privately in Cloud Firestore for authorized Sara operators to review and improve content safety. Your full conversation, attached photos, account email, and profile picture are not included. Technical request information may be processed for security; an hourly hashed network-address bucket limits abuse. Reports are retained for review and safety follow-up. Contact support for privacy or deletion requests; security records may be retained where necessary.',
   },
   {
     title: 'Subscriptions',
-    body: 'Sara Gold is optional. Apple processes App Store payments. RevenueCat processes purchase history and an app user identifier to check access and restore purchases. You can manage or cancel your subscription in your Apple account settings.',
+    body: 'Sara Gold is optional. Apple processes App Store payments, and Google processes Google Play payments. RevenueCat processes purchase history and an app user identifier to check access and restore purchases. You can manage or cancel your subscription in the store account where you subscribed (Apple App Store or Google Play).',
   },
   {
     title: 'Services and contact',
-    body: 'Sara uses Expo EAS Hosting for its chat service, OpenAI for AI replies, Firebase Authentication for optional accounts, RevenueCat for subscription access, and Apple for App Store payments. The app also includes the Google Mobile Ads SDK, although no ads are currently displayed. These providers may process information under their own privacy terms. We do not sell your chat content. For privacy questions or requests, email degenlogistics@gmail.com. You can delete your account in profile settings.',
+    body: 'Sara uses Expo EAS Hosting for its chat service, OpenAI for AI replies, Firebase Authentication for optional accounts, RevenueCat for subscription access, Firebase Hosting for public support and policy pages, and Apple App Store or Google Play for store payments. Google AdMob provides banner and optional rewarded ads for free users. Completing a rewarded ad unlocks two more questions; Sara Gold has no ads and unlimited questions. The SDK may process IP address, device identifiers, diagnostics, and ad interactions. We request non-personalized ads and do not send chat content to AdMob. Question credits are stored locally on this installation. Where required, you can revisit ad privacy choices from your profile. These providers may process information under their own privacy terms. We do not sell your chat content. For privacy questions or requests, email degenlogistics@gmail.com. You can delete your account in profile settings.',
   },
 ] as const;

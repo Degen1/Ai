@@ -1,24 +1,25 @@
 import { Host } from '@expo/ui';
 import { Picker, Text } from '@expo/ui/swift-ui';
-import { accessibilityLabel, controlSize, disabled, frame, glassEffect, pickerStyle, tag } from '@expo/ui/swift-ui/modifiers';
+import { accessibilityLabel, controlSize, disabled, font, frame, glassEffect, pickerStyle, tag } from '@expo/ui/swift-ui/modifiers';
 import { Platform, Pressable, useWindowDimensions } from 'react-native';
 
 import { AdaptiveGlass } from '@/components/adaptive-glass';
 import { authSwitcherHeight, authSwitcherWidth } from '@/components/auth-mode-switcher-size';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Shadows } from '@/constants/theme';
+import { AppFontNativeFamily, Radius, Shadows } from '@/constants/theme';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
 
 type AuthMode = 'login' | 'register';
 
-export function AuthModeSwitcher({ mode, onChange, isDisabled = false }: {
+export function AuthModeSwitcher({ mode, onChange, isDisabled = false, width: contentWidth }: {
   mode: AuthMode;
   onChange: (mode: AuthMode) => void;
   isDisabled?: boolean;
+  width?: number;
 }) {
   const { width: screenWidth } = useWindowDimensions();
-  const width = authSwitcherWidth(screenWidth);
+  const width = contentWidth ?? authSwitcherWidth(screenWidth);
   const colorScheme = useAppColorScheme();
   const theme = useTheme();
   const systemVersion = Number.parseInt(String(Platform.Version), 10);
@@ -75,8 +76,8 @@ export function AuthModeSwitcher({ mode, onChange, isDisabled = false }: {
           if (selection === 'login' || selection === 'register') onChange(selection);
         }}
         selection={mode}>
-        <Text modifiers={[tag('login')]}>እቶ</Text>
-        <Text modifiers={[tag('register')]}>ተመዝገብ</Text>
+        <Text modifiers={[tag('login'), font({ family: AppFontNativeFamily, size: 16, textStyle: 'body' })]}>እቶ</Text>
+        <Text modifiers={[tag('register'), font({ family: AppFontNativeFamily, size: 16, textStyle: 'body' })]}>ተመዝገብ</Text>
       </Picker>
     </Host>
   );

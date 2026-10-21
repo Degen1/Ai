@@ -41,3 +41,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase local deployment cache and diagnostics
+.firebase/
+firebase-debug.log*

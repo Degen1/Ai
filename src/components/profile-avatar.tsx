@@ -3,7 +3,6 @@ import { SymbolView } from 'expo-symbols';
 import { Platform, Pressable, View } from 'react-native';
 
 import { AdaptiveGlass } from '@/components/adaptive-glass';
-import { SaraMark } from '@/components/sara-mark';
 import { Radius, Shadows } from '@/constants/theme';
 import { useAccountProfile } from '@/data/profile-settings';
 import { useAuthSession } from '@/hooks/use-auth-session';
@@ -21,14 +20,14 @@ export function ProfileAvatar({ size = 72, previewUri }: { size?: number; previe
       height: size,
       borderRadius: size / 2,
       overflow: 'hidden',
-      backgroundColor: imageUri ? theme.backgroundElement : 'transparent',
+      backgroundColor: theme.backgroundElement,
       alignItems: 'center',
       justifyContent: 'center',
     }}>
       {imageUri ? (
         <Image source={{ uri: imageUri }} contentFit="cover" style={{ width: size, height: size }} />
       ) : (
-        <SaraMark size={Math.round(size * 0.72)} transparentCenter />
+        <SymbolView name={{ ios: 'person', android: 'person_outline', web: 'person_outline' }} size={Math.round(size * 0.44)} tintColor={theme.textSecondary} />
       )}
     </View>
   );

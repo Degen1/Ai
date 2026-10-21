@@ -17,20 +17,19 @@ import Animated, {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { scheduleOnRN } from 'react-native-worklets';
 
-import { AdaptiveGlass } from '@/components/adaptive-glass';
+import { QuestionAllowance } from '@/components/question-allowance';
+import { useAds } from '@/hooks/use-ads';
+import { AssistantMark } from '@/components/assistant-mark';
 import { ChatComposer } from '@/components/chat-composer';
 import { HistoryDrawer } from '@/components/history-drawer';
 import { MessageRow } from '@/components/message-row';
-import { ModeSwitcher, type AssistantMode } from '@/components/mode-switcher';
 import { ProfileButton } from '@/components/profile-avatar';
 import { ProfileDrawer } from '@/components/profile-drawer';
 import { SymbolButton } from '@/components/symbol-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThinkingIndicator } from '@/components/thinking-indicator';
-import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import {
-  type ChatMessage,
-} from '@/data/chat-data';
+import { MaxContentWidth, Spacing } from '@/constants/theme';
+import { type ChatMessage, type SavedConversation } from '@/data/chat-data';
 import { saveSelectedPhotos, type SelectedPhoto } from '@/data/chat-images';
 import { createConversationId, getConversation, saveConversation } from '@/data/conversation-store';
 import { useTheme } from '@/hooks/use-theme';
@@ -71,6 +70,7 @@ function replyErrorMessage(cause: unknown, includesPhoto: boolean) {
 }
 
 export default function ChatScreen() {
+  const ads = useAds();
   const { conversation } = useLocalSearchParams<{ conversation?: string }>();
   const [messages, setMessages] = useState<ChatMessage[]>(
     () => getConversation(conversation)?.messages ?? [],
@@ -79,8 +79,8 @@ export default function ChatScreen() {
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [failedPrompt, setFailedPrompt] = useState<string | null>(null);
-  const [composerHeight, setComposerHeight] = useState(72);
-  const [mode, setMode] = useState<AssistantMode>(() => getConversation(conversation)?.mode ?? 'chat');
+  const [composerHeight, setComposerHeight] = useState(64);
+  const [mode, setMode] = useState<SavedConversation['mode']>(() => getConversation(conversation)?.mode ?? 'chat');
   const [activeDrawer, setActiveDrawer] = useState<DrawerSide | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const requestId = useRef(0);
@@ -90,7 +90,7 @@ export default function ChatScreen() {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { width: screenWidth } = useWindowDimensions();
-  const drawerWidth = Math.min(screenWidth * 0.82, 460);
+  const drawerWidth = screenWidth;
   const pageCornerRadius = Math.round(Math.min(
     60,
     Math.max(48, insets.top - 4, Math.min(screenWidth, 430) * 0.14),
@@ -100,7 +100,7 @@ export default function ChatScreen() {
   const panSide = useSharedValue(1);
   const keyboardProgress = useSharedValue(0);
   const bottomInset = Math.max(insets.bottom, Spacing.sm);
-  const headerHeight = Math.max(insets.top, Spacing.sm) + 64 + Spacing.sm;
+  const headerHeight = Math.max(insets.top, Spacing.sm) + 56 + Spacing.sm;
 
   const mountDrawer = useCallback((side: DrawerSide) => {
     Keyboard.dismiss();
@@ -160,9 +160,10 @@ export default function ChatScreen() {
     })
     .onEnd((event) => {
       const projectedPosition = drawerPosition.get() + (event.velocityX / drawerWidth) * 0.2;
+      const threshold = Math.abs(panStart.get()) < 0.5 ? 0.22 : 0.78;
       const target = panSide.get() > 0
-        ? (projectedPosition < 0.5 ? 0 : 1)
-        : (projectedPosition > -0.5 ? 0 : -1);
+        ? (projectedPosition < threshold ? 0 : 1)
+        : (projectedPosition > -threshold ? 0 : -1);
       if (target !== panStart.get()) scheduleOnRN(triggerSwipeHaptic);
       drawerPosition.set(withSpring(target, {
         duration: 300,
@@ -213,17 +214,12 @@ export default function ChatScreen() {
     activeConversationId.current = null;
     router.setParams({ conversation: undefined });
     setMessages([]);
+    setMode('chat');
     setIsThinking(false);
     setError(null);
     setSaveError(null);
     setFailedPrompt(null);
     if (activeDrawer) closeDrawer();
-  };
-
-  const changeMode = (nextMode: AssistantMode) => {
-    if (nextMode === mode) return;
-    setMode(nextMode);
-    startNewChat();
   };
 
   const openConversation = (id: string) => {
@@ -248,6 +244,7 @@ export default function ChatScreen() {
   };
 
   const requestReply = async (nextMessages: ChatMessage[]) => {
+    const questionId = nextMessages.at(-1)!.id;
     const activeRequest = requestId.current + 1;
     requestId.current = activeRequest;
     requestInFlight.current = true;
@@ -270,7 +267,8 @@ export default function ChatScreen() {
 
     try {
       const reply = await chatTransport.send(nextMessages, activeMode);
-      if (requestId.current !== activeRequest) return;
+      if (requestId.current !== activeRequest) { ads.refundQuestion(questionId); return; }
+      ads.completeQuestion(questionId);
       const completedMessages = [...nextMessages, createMessage('assistant', reply)];
       setMessages(completedMessages);
       try {
@@ -280,6 +278,7 @@ export default function ChatScreen() {
         setSaveError('እዚ ዕላል ኣብ መሳርሒኻ ክቕመጥ ኣይከኣለን።');
       }
     } catch (cause) {
+      ads.refundQuestion(questionId);
       if (requestId.current !== activeRequest) return;
       console.warn('Sara chat request failed:', cause instanceof Error ? cause.message : 'UNKNOWN_ERROR');
       setError(replyErrorMessage(cause, nextMessages.some((message) => Boolean(message.images?.length))));
@@ -292,13 +291,18 @@ export default function ChatScreen() {
     }
   };
 
+  const beginReply = (nextMessages: ChatMessage[]) => {
+    if (requestInFlight.current || !nextMessages.length || !ads.authorizeQuestion(nextMessages.at(-1)!.id)) return false;
+    void requestReply(nextMessages);
+    return true;
+  };
+
   const sendMessage = (content: string, photos: SelectedPhoto[]) => {
-    if (requestInFlight.current) return false;
+    if (requestInFlight.current || !ads.canAsk) return false;
     try {
       const images = saveSelectedPhotos(photos);
       const messageText = content || 'እዞም ስእልታት ግለጸለይ።';
-      void requestReply([...messages, createMessage('user', messageText, images)]);
-      return true;
+      return beginReply([...messages, createMessage('user', messageText, images)]);
     } catch {
       setError('ስእሊ ክቕመጥ ኣይከኣለን። እንደገና ፈትን።');
       return false;
@@ -310,6 +314,7 @@ export default function ChatScreen() {
       <View style={{ flex: 1, backgroundColor: theme.background, overflow: 'hidden' }}>
         {activeDrawer === 'history' ? (
           <HistoryDrawer
+            adsVisible={drawerOpen}
             onClose={closeDrawer}
             onDelete={onDeleteConversation}
             onNewChat={startNewChat}
@@ -319,7 +324,7 @@ export default function ChatScreen() {
           />
         ) : null}
         {activeDrawer === 'profile' ? (
-          <ProfileDrawer onClose={closeDrawer} progress={drawerPosition} width={drawerWidth} />
+          <ProfileDrawer adsVisible={drawerOpen} onClose={closeDrawer} progress={drawerPosition} width={drawerWidth} />
         ) : null}
         <Animated.View
           style={[
@@ -359,22 +364,11 @@ export default function ChatScreen() {
                 <View
                   pointerEvents="box-none"
                   style={{
-                    height: 64,
+                    height: 56,
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'space-between',
                   }}>
-                  <View
-                    pointerEvents="box-none"
-                    style={{
-                      position: 'absolute',
-                      left: 0,
-                      right: 0,
-                      alignItems: 'center',
-                      zIndex: 0,
-                    }}>
-                    <ModeSwitcher mode={mode} onChange={changeMode} />
-                  </View>
                   <View style={{ zIndex: 1 }}>
                     <SymbolButton
                       accessibilityLabel="ታሪኽ ዕላላት ክፈት"
@@ -397,7 +391,7 @@ export default function ChatScreen() {
                 contentContainerStyle={{
                   flexGrow: 1,
                   gap: Spacing.lg,
-                  paddingTop: headerHeight + (messages.length === 0 ? Spacing.md : Spacing.xl),
+                  paddingTop: headerHeight + Spacing.md,
                   paddingBottom: composerHeight + bottomInset + Spacing.lg,
                 }}
                 data={messages}
@@ -414,19 +408,13 @@ export default function ChatScreen() {
                           alignSelf: 'center',
                           flexDirection: 'row',
                           alignItems: 'center',
-                          gap: Spacing.twoHalf,
+                          gap: Spacing.sm,
                           paddingHorizontal: Spacing.md,
                         }}>
-                        <AdaptiveGlass
-                          style={{
-                            paddingHorizontal: Spacing.md,
-                            paddingVertical: Spacing.sm,
-                            borderRadius: Radius.full,
-                            borderWidth: 1,
-                            borderColor: theme.glassBorder,
-                          }}>
+                        <AssistantMark />
+                        <View style={{ height: 26, justifyContent: 'center' }}>
                           <ThinkingIndicator />
-                        </AdaptiveGlass>
+                        </View>
                       </View>
                     ) : null}
                     {saveError ? (
@@ -450,7 +438,7 @@ export default function ChatScreen() {
                               setSaveError('እዚ ዕላል ኣብ መሳርሒኻ ክቕመጥ ኣይከኣለን።');
                             }
                           }}
-                          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignSelf: 'flex-start' })}>
+                          style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' })}>
                           <ThemedText type="label" themeColor="accent">እንደገና ፈትን</ThemedText>
                         </Pressable>
                       </View>
@@ -469,8 +457,8 @@ export default function ChatScreen() {
                         {failedPrompt ? (
                           <Pressable
                             accessibilityRole="button"
-                            onPress={() => { void requestReply(messages); }}
-                            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignSelf: 'flex-start' })}>
+                            onPress={() => { beginReply(messages); }}
+                            style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1, alignSelf: 'flex-start', minHeight: 44, justifyContent: 'center' })}>
                             <ThemedText type="label" themeColor="accent">
                               እንደገና ፈትን
                             </ThemedText>
@@ -489,12 +477,14 @@ export default function ChatScreen() {
 
               <View pointerEvents="none" style={{ flex: 1 }} />
               <Animated.View style={[composerInsetsStyle, { zIndex: 1 }]}>
-                <ChatComposer
-                  disabled={isThinking}
-                  onHeightChange={setComposerHeight}
-                  onSubmit={sendMessage}
-                  placeholder={mode === 'chat' ? 'ንሳራ ሕተት' : 'ምስ ሳራ ስራሕ'}
-                />
+                <View onLayout={({ nativeEvent }) => setComposerHeight(nativeEvent.layout.height)}>
+                  <QuestionAllowance thinking={isThinking} />
+                  <ChatComposer
+                    disabled={isThinking}
+                    onSubmit={sendMessage}
+                    placeholder={mode === 'chat' ? 'ንሳራ ሕተት' : 'ምስ ሳራ ስራሕ'}
+                  />
+                </View>
               </Animated.View>
             </View>
           </KeyboardAvoidingView>

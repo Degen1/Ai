@@ -6,7 +6,7 @@ import { Keyboard, Pressable, ScrollView, TextInput, View } from 'react-native';
 import { AdaptiveGlass } from '@/components/adaptive-glass';
 import { SymbolButton } from '@/components/symbol-button';
 import { ThemedText } from '@/components/themed-text';
-import { MaxContentWidth, Radius, Shadows, Spacing } from '@/constants/theme';
+import { AppFontFamily, MaxContentWidth, Radius, Shadows, Spacing, Typography } from '@/constants/theme';
 import type { SelectedPhoto } from '@/data/chat-images';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
@@ -77,14 +77,15 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
       paddingHorizontal: Spacing.md, paddingTop: Spacing.sm,
     }}>
       {photos.length > 0 ? (
-        <ScrollView horizontal keyboardShouldPersistTaps="always"
-          contentContainerStyle={{ gap: Spacing.sm, paddingVertical: Spacing.xs }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="always"
+          contentContainerStyle={{ gap: Spacing.sm, padding: Spacing.sm }}>
           {photos.map((photo) => (
             <View key={photo.id} style={{ width: 72, height: 72 }}>
               <Image source={{ uri: photo.uri }} style={{ width: 72, height: 72, borderRadius: Radius.md }} />
               <Pressable
                 accessibilityLabel="ስእሊ ኣውጽእ"
                 accessibilityRole="button"
+                hitSlop={10}
                 onPress={() => setPhotos((current) => current.filter((item) => item.id !== photo.id))}
                 style={{
                   position: 'absolute', right: -5, top: -5, width: 24, height: 24,
@@ -99,8 +100,8 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
       ) : null}
       {photoError ? <ThemedText type="caption" themeColor="danger">{photoError}</ThemedText> : null}
       <AdaptiveGlass strong style={{
-        minHeight: 64, flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
-        paddingHorizontal: 7, paddingVertical: 6, borderRadius: Radius.full,
+        minHeight: 56, flexDirection: 'row', alignItems: 'center', gap: Spacing.xs,
+        paddingHorizontal: 6, paddingVertical: 6, borderRadius: 28, borderCurve: 'continuous',
         borderWidth: 1,
         borderColor: colorScheme === 'light' ? theme.border : theme.glassBorder,
         boxShadow: Shadows.composer,
@@ -128,8 +129,8 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
           returnKeyType="default"
           selectionColor={theme.accent}
           style={{
-            flex: 1, maxHeight: 132, minHeight: 42, paddingVertical: 9,
-            color: theme.text, fontSize: 16, lineHeight: 22, textAlignVertical: 'top',
+            flex: 1, maxHeight: 132, minHeight: 38, paddingHorizontal: Spacing.xs, paddingVertical: 6,
+            color: theme.text, fontFamily: AppFontFamily, ...Typography.body, textAlignVertical: 'top',
           }}
           value={draft}
         />

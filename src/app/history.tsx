@@ -14,7 +14,7 @@ export default function HistoryScreen() {
   const headerHeight = Math.max(insets.top, Spacing.sm) + 52 + Spacing.sm;
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background }}>
+    <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom }}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <View
@@ -60,7 +60,7 @@ export default function HistoryScreen() {
 
       <ConversationList
         onSelect={(id) => router.replace({ pathname: '/', params: { conversation: id } })}
-        topPadding={headerHeight}
+        topPadding={headerHeight + Spacing.md}
       />
     </View>
   );

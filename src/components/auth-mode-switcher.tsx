@@ -8,13 +8,14 @@ import { useTheme } from '@/hooks/use-theme';
 
 type AuthMode = 'login' | 'register';
 
-export function AuthModeSwitcher({ mode, onChange, isDisabled = false }: {
+export function AuthModeSwitcher({ mode, onChange, isDisabled = false, width: contentWidth }: {
   mode: AuthMode;
   onChange: (mode: AuthMode) => void;
   isDisabled?: boolean;
+  width?: number;
 }) {
   const { width: screenWidth } = useWindowDimensions();
-  const width = authSwitcherWidth(screenWidth);
+  const width = contentWidth ?? authSwitcherWidth(screenWidth);
   const theme = useTheme();
 
   return (
