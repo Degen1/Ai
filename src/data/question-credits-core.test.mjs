@@ -20,7 +20,8 @@ test('two successful questions exhaust the initial allowance across chats', () =
 test('a completed reward grants exactly two questions and duplicate callbacks grant nothing', () => {
   const { store } = fixture();
   for (const id of ['1','2']) { store.reserve(id); store.complete(id); }
-  store.reward('ad-1'); store.reward('ad-1');
+  assert.equal(store.reward('ad-1'), 2);
+  assert.equal(store.reward('ad-1'), 0);
   assert.equal(store.getSnapshot().remaining, 2);
   for (const id of ['3','4']) { assert.equal(store.reserve(id), true); store.complete(id); }
   assert.equal(store.reserve('5'), false);

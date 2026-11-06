@@ -15,7 +15,7 @@ export default function HistoryScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.background, paddingBottom: insets.bottom }}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Stack.Screen options={{ headerShown: false, scrollEdgeEffects: { top: 'hidden' } }} />
 
       <View
         pointerEvents="box-none"

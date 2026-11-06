@@ -1,31 +1,24 @@
-import { useAds } from '@/hooks/use-ads';
-import { AdBanner } from '@/components/ad-banner';
 import { router } from 'expo-router';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
-import * as Linking from 'expo-linking';
 import { SymbolView } from 'expo-symbols';
 import { useEffect, useState } from 'react';
-import { Alert, Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
+import { Platform, Pressable, ScrollView, TextInput, View } from 'react-native';
 import Animated, { type SharedValue, useAnimatedStyle } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { AccountInformation } from '@/components/account-information';
 import { ProfileAvatar } from '@/components/profile-avatar';
 import { ThemedText } from '@/components/themed-text';
-import { ControlSize, FormInputStyle, MembershipCard, ProfileCardMaxWidth, Radius, Spacing } from '@/constants/theme';
-import { TERMS_OF_USE_URL } from '@/constants/legal';
-import { SUPPORT_EMAIL } from '@/constants/privacy-policy';
-import { clearAccountProfile, removeProfileAvatar, saveProfileAvatar, setProfileDisplayName, useAccountProfile } from '@/data/profile-settings';
+import { ControlSize, FormInputStyle, MembershipCard, Radius, Spacing } from '@/constants/theme';
+import { removeProfileAvatar, saveProfileAvatar, setProfileDisplayName, useAccountProfile } from '@/data/profile-settings';
 import { useAuthSession } from '@/hooks/use-auth-session';
 import { useAppColorScheme } from '@/hooks/use-app-color-scheme';
 import { useTheme } from '@/hooks/use-theme';
-import { deleteAccount, logout, updateAccountName } from '@/services/auth-service';
+import { updateAccountName } from '@/services/auth-service';
 import { getGoldStatus, subscribeGoldStatus } from '@/services/gold-subscription';
 
 type ProfileDrawerProps = {
-  adsVisible?: boolean;
   onClose: () => void;
   progress: SharedValue<number>;
   width: number;
@@ -33,8 +26,7 @@ type ProfileDrawerProps = {
 
 type PendingAvatar = { uri: string; base64: string };
 
-export function ProfileDrawer({ adsVisible = true, onClose, progress, width }: ProfileDrawerProps) {
-  const ads = useAds();
+export function ProfileDrawer({ onClose, progress, width }: ProfileDrawerProps) {
   const insets = useSafeAreaInsets();
   const colorScheme = useAppColorScheme();
   const theme = useTheme();
@@ -48,7 +40,8 @@ export function ProfileDrawer({ adsVisible = true, onClose, progress, width }: P
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [gold, setGold] = useState(false);
-  const cardWidth = Math.min(width - Spacing.md * 2, ProfileCardMaxWidth);
+  const cardInset = Math.max(MembershipCard.sideInset, insets.left, insets.right);
+  const cardWidth = Math.min(width - cardInset * 2, MembershipCard.maxWidth);
   let glassAvailable = false;
   if (Platform.OS === 'ios') {
     try {
@@ -78,7 +71,7 @@ export function ProfileDrawer({ adsVisible = true, onClose, progress, width }: P
     setError(null);
   };
 
-  const openModal = (path: '/auth' | '/gold' | '/privacy') => {
+  const openModal = (path: '/auth' | '/gold') => {
     cancelEditing();
     if (path !== '/gold') onClose();
     router.push(path);
@@ -153,49 +146,6 @@ export function ProfileDrawer({ adsVisible = true, onClose, progress, width }: P
     }
   };
 
-  const signOut = async () => {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await logout();
-      cancelEditing();
-    } catch {
-      setError('ካብ መለለዪኻ ምውጻእ ኣይከኣለን።');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const removeAccount = async () => {
-    if (!user || busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await deleteAccount();
-      clearAccountProfile(user.uid);
-      cancelEditing();
-    } catch (nextError) {
-      const code = nextError && typeof nextError === 'object' && 'code' in nextError ? String(nextError.code) : '';
-      setError(code === 'auth/requires-recent-login'
-        ? 'መለለዪኻ ንምስራዝ ቀዳማይ ውጻእ እሞ እንደገና እቶ።'
-        : 'መለለዪኻ ክስረዝ ኣይከኣለን። እንደገና ፈትን።');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const confirmDelete = () => {
-    if (Platform.OS === 'web') {
-      if (window.confirm('መለለዪኻ ብቐዋምነት ክስረዝ ትደሊ?')) void removeAccount();
-      return;
-    }
-    Alert.alert('መለለዪ ሰርዝ', 'መለለዪኻ ብቐዋምነት ክስረዝ ትደሊ?', [
-      { text: 'ይቕረ', style: 'cancel' },
-      { text: 'ሰርዝ', style: 'destructive', onPress: () => { void removeAccount(); } },
-    ]);
-  };
-
   return (
     <Animated.View
       accessibilityViewIsModal
@@ -219,7 +169,7 @@ export function ProfileDrawer({ adsVisible = true, onClose, progress, width }: P
         contentContainerStyle={{
           paddingTop: Math.max(insets.top, Spacing.md) + Spacing.md,
           paddingBottom: Math.max(insets.bottom, Spacing.md) + Spacing.lg,
-          paddingHorizontal: Spacing.md,
+          paddingHorizontal: cardInset,
           gap: Spacing.lg,
           alignItems: 'center',
         }}>
@@ -374,39 +324,8 @@ export function ProfileDrawer({ adsVisible = true, onClose, progress, width }: P
               {status === 'loading' || busy ? '…' : editing ? 'ዓቅብ' : user ? 'ኣርም' : 'እቶ'}
             </ThemedText>
           </Pressable>
+          {error ? <ThemedText type="caption" themeColor="danger">{error}</ThemedText> : null}
         </ProfileCard>
-        {error ? <ThemedText type="caption" themeColor="danger">{error}</ThemedText> : null}
-
-        {user ? (
-          <View style={{ width: cardWidth, gap: Spacing.sm }}>
-            <ThemedText type="label" themeColor="textSecondary" style={{ paddingHorizontal: Spacing.xs }}>መለለዪ</ThemedText>
-            <AccountInformation email={user.email} />
-            <View style={{ borderRadius: Radius.lg, borderCurve: 'continuous', backgroundColor: theme.surface, overflow: 'hidden' }}>
-            <Pressable accessibilityRole="button" disabled={busy} onPress={() => { void signOut(); }} style={({ pressed }) => ({ minHeight: ControlSize.field, justifyContent: 'center', padding: Spacing.md, borderRadius: Radius.lg, borderCurve: 'continuous', backgroundColor: theme.surface, opacity: busy || pressed ? 0.6 : 1 })}>
-              <ThemedText type="label">ውጻእ</ThemedText>
-            </Pressable>
-            <View style={{ height: 1, marginHorizontal: Spacing.md, backgroundColor: theme.border }} />
-            <Pressable accessibilityRole="button" disabled={busy} onPress={confirmDelete} style={({ pressed }) => ({ minHeight: ControlSize.field, justifyContent: 'center', padding: Spacing.md, borderRadius: Radius.lg, borderCurve: 'continuous', backgroundColor: theme.surface, opacity: busy || pressed ? 0.6 : 1 })}>
-              <ThemedText type="label" themeColor="danger">መለለዪ ሰርዝ</ThemedText>
-            </Pressable>
-            </View>
-          </View>
-        ) : null}
-        <View style={{ width: cardWidth, flexDirection: 'row', flexWrap: 'wrap', columnGap: Spacing.md, rowGap: Spacing.xs, paddingHorizontal: Spacing.xs }}>
-          <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => { void Linking.openURL(TERMS_OF_USE_URL); }}>
-            <ThemedText type="caption" themeColor="textSecondary">ናይ ኣጠቓቕማ ውዕል</ThemedText>
-          </Pressable>
-          <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => openModal('/privacy')}>
-            <ThemedText type="caption" themeColor="textSecondary">ፖሊሲ ብሕትውና</ThemedText>
-          </Pressable>
-          <Pressable accessibilityRole="link" style={({ pressed }) => ({ minHeight: ControlSize.touch, justifyContent: 'center', opacity: pressed ? 0.6 : 1 })} onPress={() => { void Linking.openURL(`mailto:${SUPPORT_EMAIL}`); }}>
-            <ThemedText type="caption" themeColor="textSecondary">ሓገዝ</ThemedText>
-          </Pressable>
-        </View>
-        {ads.privacyRequired ? <Pressable accessibilityRole="button" onPress={() => { void ads.showPrivacyOptions(); }} style={{ minHeight: 44, justifyContent: 'center' }}>
-          <ThemedText type="caption" themeColor="textSecondary">ምርጫታት ብሕትውና ማስታወቂያ</ThemedText>
-        </Pressable> : null}
-        <AdBanner visible={adsVisible} />
       </ScrollView>
     </Animated.View>
   );

@@ -52,10 +52,10 @@
   "scripts": {
     "chat-server": "node --env-file-if-exists=.env.local server/chat-server.mjs",
     "test:chat-server": "node --test server/chat-server.test.mjs",
-    "start": "expo start",
+    "start": "APP_VARIANT=development expo start --dev-client",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "android": "npm run start -- --android",
+    "ios": "npm run start -- --ios",
     "web": "expo start --web",
     "lint": "expo lint"
   },

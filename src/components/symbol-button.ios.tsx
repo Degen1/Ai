@@ -1,15 +1,21 @@
 import { Host } from '@expo/ui';
-import { Button } from '@expo/ui/swift-ui';
+import { Button, Image as NativeImage, ZStack } from '@expo/ui/swift-ui';
 import {
+  accessibilityLabel as accessibilityLabelModifier,
+  aspectRatio,
   buttonBorderShape,
   buttonStyle,
+  clipShape,
   controlSize,
   disabled as disabledModifier,
   foregroundStyle,
+  frame,
   imageScale,
   labelStyle,
+  resizable,
   tint,
 } from '@expo/ui/swift-ui/modifiers';
+import { Image } from 'expo-image';
 import type { SymbolViewProps } from 'expo-symbols';
 import type { ComponentProps } from 'react';
 import {
@@ -34,6 +40,7 @@ type SymbolButtonProps = {
   filled?: boolean;
   glass?: boolean;
   iconColor?: string;
+  imageUri?: string | null;
   size?: number;
   style?: StyleProp<ViewStyle>;
 };
@@ -55,6 +62,7 @@ export function SymbolButton({
   filled = false,
   glass = false,
   iconColor,
+  imageUri,
   size = 20,
   style,
 }: SymbolButtonProps) {
@@ -72,20 +80,31 @@ export function SymbolButton({
         ignoreSafeArea="all"
         style={[{ width: hostSize, height: hostSize }, style]}>
         <Button
-          label={accessibilityLabel}
+          label={glass ? undefined : accessibilityLabel}
+          systemImage={glass ? undefined : getIosSymbol(name)}
           modifiers={[
             buttonStyle(filled ? 'glassProminent' : 'glass'),
             buttonBorderShape('circle'),
             controlSize(glass ? 'extraLarge' : 'large'),
-            imageScale(size >= 22 ? 'large' : 'medium'),
-            labelStyle('iconOnly'),
+            accessibilityLabelModifier(accessibilityLabel),
+            ...(!glass ? [imageScale(size >= 22 ? 'large' : 'medium'), labelStyle('iconOnly')] : []),
             tint(filled ? theme.primaryAction : theme.text),
             ...(iconColor ? [foregroundStyle(iconColor)] : []),
             disabledModifier(disabled),
           ]}
-          onPress={onPress}
-          systemImage={getIosSymbol(name)}
-        />
+          onPress={onPress}>
+          {/* A fixed label footprint keeps glass circles equal for every symbol/avatar. */}
+          {glass ? <ZStack modifiers={[frame({ width: 22, height: 22 })]}>
+            {imageUri ? (
+              <NativeImage
+                uiImage={imageUri}
+                modifiers={[resizable(), aspectRatio({ contentMode: 'fill' }), frame({ width: 38, height: 38 }), clipShape('circle')]}
+              />
+            ) : (
+              <NativeImage systemName={getIosSymbol(name)} size={size} />
+            )}
+          </ZStack> : undefined}
+        </Button>
       </Host>
     );
   }
@@ -111,12 +130,14 @@ export function SymbolButton({
         },
         style,
       ]}>
-      <SymbolView
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} contentFit="cover" style={{ width: 42, height: 42, borderRadius: Radius.full }} />
+      ) : <SymbolView
         name={name}
         size={size}
         tintColor={iconColor ?? (filled ? theme.primaryActionText : theme.text)}
         weight="semibold"
-      />
+      />}
     </Pressable>
   );
 

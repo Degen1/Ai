@@ -1,8 +1,9 @@
 import { router } from 'expo-router';
-import { ActivityIndicator, Pressable, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
-import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { ControlSize, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { REWARDED_QUESTION_COUNT } from '@/data/question-credits-core';
 import { useAds } from '@/hooks/use-ads';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -23,14 +24,30 @@ export function QuestionAllowance({ thinking }: { thinking: boolean }) {
             <ThemedText type="label">ኣባልነት ክረጋገጽ ኣይከኣለን። እንደገና ፈትን</ThemedText>
           </Pressable>
         ) : gated ? <>
-          <ThemedText type="caption">ማስታወቂያ ብምርኣይ 2 ተወሰኽቲ ሕቶታት ርኸብ።</ThemedText>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: Spacing.md }}>
-            <Pressable accessibilityRole="button" disabled={loading || !ads.canWatch} onPress={() => { void ads.watchReward(); }}
-              style={({ pressed }) => ({ flex: 1, minHeight: 44, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.sm, backgroundColor: theme.primaryAction, opacity: pressed || loading ? 0.6 : 1 })}>
-              {loading ? <ActivityIndicator color={theme.primaryActionText} /> : <ThemedText type="label" style={{ color: theme.primaryActionText }}>{ads.rewardState === 'ready' ? 'ማስታወቂያ ርአ' : 'እንደገና ፈትን'}</ThemedText>}
+          <ThemedText type="caption">ማስታወቂያ ብምርኣይ {REWARDED_QUESTION_COUNT} ተወሰኽቲ ሕቶታት ርኸብ።</ThemedText>
+          <View style={{ flexDirection: 'row', gap: Spacing.md }}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.push('/gold')}
+              style={({ pressed }) => [
+                styles.action,
+                { backgroundColor: '#FFFFFF', opacity: pressed ? 0.6 : 1 },
+              ]}>
+              <ThemedText type="label" style={[styles.actionLabel, { color: '#000000' }]}>ጎልድ</ThemedText>
             </Pressable>
-            <Pressable accessibilityRole="button" onPress={() => router.push('/gold')} style={{ minHeight: 44, justifyContent: 'center' }}>
-              <ThemedText type="label">ጎልድ</ThemedText>
+            <Pressable
+              accessibilityRole="button"
+              disabled={loading || !ads.canWatch}
+              onPress={() => { void ads.watchReward(); }}
+              style={({ pressed }) => [
+                styles.action,
+                { backgroundColor: theme.primaryAction, opacity: pressed || loading ? 0.6 : 1 },
+              ]}>
+              {loading ? <ActivityIndicator color={theme.primaryActionText} /> : (
+                <ThemedText type="label" style={[styles.actionLabel, { color: theme.primaryActionText }]}>
+                  {ads.rewardState === 'ready' ? 'ማስታወቂያ ርአ' : 'እንደገና ፈትን'}
+                </ThemedText>
+              )}
             </Pressable>
           </View>
         </> : null}
@@ -38,3 +55,18 @@ export function QuestionAllowance({ thinking }: { thinking: boolean }) {
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  action: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: ControlSize.touch,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.sm,
+  },
+  actionLabel: {
+    textAlign: 'center',
+  },
+});

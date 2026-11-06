@@ -1,4 +1,5 @@
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
+import { Image } from 'expo-image';
 import { Pressable, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { AdaptiveGlass } from '@/components/adaptive-glass';
@@ -13,6 +14,7 @@ type SymbolButtonProps = {
   filled?: boolean;
   glass?: boolean;
   iconColor?: string;
+  imageUri?: string | null;
   size?: number;
   style?: StyleProp<ViewStyle>;
 };
@@ -25,6 +27,7 @@ export function SymbolButton({
   filled = false,
   glass = false,
   iconColor,
+  imageUri,
   size = 20,
   style,
 }: SymbolButtonProps) {
@@ -51,12 +54,14 @@ export function SymbolButton({
         },
         style,
       ]}>
-      <SymbolView
+      {imageUri ? (
+        <Image source={{ uri: imageUri }} contentFit="cover" style={{ width: 42, height: 42, borderRadius: Radius.full }} />
+      ) : <SymbolView
         name={name}
         size={size}
         tintColor={iconColor ?? (filled ? theme.primaryActionText : theme.text)}
         weight="semibold"
-      />
+      />}
     </Pressable>
   );
 

@@ -4,12 +4,14 @@ import type { RewardedAd } from 'react-native-google-mobile-ads';
 
 import { REWARDED_AD_UNIT_IDS, USE_TEST_ADS } from '@/constants/admob';
 import { questionCredits } from '@/data/question-credits';
+import { REWARDED_QUESTION_COUNT } from '@/data/question-credits-core';
 import { useAuthSession } from '@/hooks/use-auth-session';
 import { getAdsSdk } from '@/services/ad-sdk';
 import { getGoldStatus, subscribeGoldStatus } from '@/services/gold-subscription';
 
 type RewardState = 'idle' | 'loading' | 'ready' | 'showing' | 'error';
 type Plan = 'checking' | 'free' | 'gold' | 'error';
+export type QuestionReward = { id: string; amount: number };
 const AdsContext = createContext<ReturnType<typeof useAdsController> | null>(null);
 const noSubscribe = () => () => {};
 const webSnapshot = { remaining: 2, pending: [], completed: [], rewards: [] };
@@ -20,7 +22,7 @@ async function initializeAds() {
   if (!sdk) return false;
   if (!initialization) initialization = (async () => {
     // Sara targets ages 13+: keep ad creative suitable for a general audience and
-    // disable publisher-side personalization before initializing either ad format.
+    // disable publisher-side personalization before initializing rewarded ads.
     await sdk.default().setRequestConfiguration({
       maxAdContentRating: sdk.MaxAdContentRating.G,
       publisherPrivacyPersonalizationState: 'disabled',
@@ -43,9 +45,9 @@ function useAdsController() {
   const identity = `${status}:${user?.uid ?? 'guest'}:${planAttempt}`;
   const [planResult, setPlanResult] = useState<{ identity: string; value: Plan } | null>(null);
   const plan: Plan = !native ? 'gold' : planResult?.identity === identity ? planResult.value : 'checking';
-  const [adsReady, setAdsReady] = useState(false);
   const [privacyRequired, setPrivacyRequired] = useState(false);
   const [rewardState, setRewardState] = useState<RewardState>('loading');
+  const [rewardCelebration, setRewardCelebration] = useState<QuestionReward | null>(null);
   const [adUnavailable, setAdUnavailable] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [message, setMessage] = useState<string | null>(null);
@@ -54,6 +56,18 @@ function useAdsController() {
   const showing = useRef(false);
   const pendingReward = useRef<string | null>(null);
   const loadedAt = useRef(0);
+
+  const saveEarnedReward = useCallback((id: string) => {
+    if (!store) return;
+    const amount = store.reward(id);
+    pendingReward.current = null;
+    setMessage(null);
+    if (amount > 0) setRewardCelebration({ id, amount });
+  }, [store]);
+
+  const dismissRewardCelebration = useCallback((id: string) => {
+    setRewardCelebration((reward) => reward?.id === id ? null : reward);
+  }, []);
 
   useEffect(() => {
     if (!native || status === 'loading') return;
@@ -114,7 +128,6 @@ function useAdsController() {
       if (!current) return;
       setPrivacyRequired(info.privacyOptionsRequirementStatus === sdk.AdsConsentPrivacyOptionsRequirementStatus.REQUIRED);
       if (!ready) throw new Error('ADS_NOT_READY');
-      setAdsReady(true);
       setRewardState('loading');
       const unit = USE_TEST_ADS ? sdk.TestIds.REWARDED : REWARDED_AD_UNIT_IDS[Platform.OS === 'ios' ? 'ios' : 'android'];
       ad = sdk.RewardedAd.createForAdRequest(unit, { requestNonPersonalizedAdsOnly: true });
@@ -132,16 +145,14 @@ function useAdsController() {
         earned = true;
         pendingReward.current = rewardId;
         try {
-          store?.reward(rewardId);
-          pendingReward.current = null;
-          setMessage(null);
-        } catch { setMessage('እተን 2 ሕቶታት ክዕቀባ ኣይከኣላን። ቦታ መዕቀቢኻ ፈትሽ።'); }
+          saveEarnedReward(rewardId);
+        } catch { setMessage(`እተን ${REWARDED_QUESTION_COUNT} ሕቶታት ክዕቀባ ኣይከኣላን። ቦታ መዕቀቢኻ ፈትሽ።`); }
       }));
       removers.push(ad.addAdEventListener(sdk.AdEventType.CLOSED, () => {
         if (!current || failed) return;
         showing.current = false;
         setRewardState('loading');
-        if (!earned) setMessage('2 ተወሰኽቲ ሕቶታት ንምርካብ ነቲ ማስታወቂያ ክሳዕ መወዳእታ ርአ።');
+        if (!earned) setMessage(`${REWARDED_QUESTION_COUNT} ተወሰኽቲ ሕቶታት ንምርካብ ነቲ ማስታወቂያ ክሳዕ መወዳእታ ርአ።`);
         // Prepare the next ad without asking the user to retry a closed one.
         rewarded.current = null;
         setAttempt((value) => value + 1);
@@ -159,15 +170,14 @@ function useAdsController() {
       showing.current = false;
       ad?.destroy();
     };
-  }, [plan, native, store, attempt]);
+  }, [plan, native, saveEarnedReward, attempt]);
 
   const authorizeQuestion = useCallback((id: string) => {
     if (!native || plan === 'gold') return true;
     if (plan !== 'free') return false;
     try {
       if (pendingReward.current) {
-        store!.reward(pendingReward.current);
-        pendingReward.current = null;
+        saveEarnedReward(pendingReward.current);
       }
       if (adUnavailable && !showing.current) store!.grantAdFallback(`unavailable-${id}`);
       const allowed = store!.reserve(id);
@@ -175,7 +185,7 @@ function useAdsController() {
       return allowed;
     }
     catch { setQuestionError('ሕቶኻ ክዕቀብ ኣይከኣለን። ቦታ መዕቀቢኻ ፈትሽ።'); return false; }
-  }, [adUnavailable, native, plan, store]);
+  }, [adUnavailable, native, plan, saveEarnedReward, store]);
   const completeQuestion = useCallback((id: string) => {
     try { store?.complete(id); } catch { setQuestionError('ሓበሬታ ሕቶኻ ክዕቀብ ኣይከኣለን።'); }
   }, [store]);
@@ -186,8 +196,8 @@ function useAdsController() {
   const watchReward = async () => {
     if (plan !== 'free' || credits.remaining > 0 || credits.pending.length > 0 || showing.current) return;
     if (pendingReward.current) {
-      try { store?.reward(pendingReward.current); pendingReward.current = null; setMessage(null); }
-      catch { setMessage('እተን 2 ሕቶታት ክዕቀባ ኣይከኣላን። ቦታ መዕቀቢኻ ፈትሽ።'); }
+      try { saveEarnedReward(pendingReward.current); }
+      catch { setMessage(`እተን ${REWARDED_QUESTION_COUNT} ሕቶታት ክዕቀባ ኣይከኣላን። ቦታ መዕቀቢኻ ፈትሽ።`); }
       return;
     }
     if (rewardState !== 'ready' || !rewarded.current || Date.now() - loadedAt.current > 55 * 60 * 1000) { setRewardState('loading'); setMessage(null); setAttempt((value) => value + 1); return; }
@@ -208,23 +218,25 @@ function useAdsController() {
 
   const showPrivacyOptions = async () => {
     const sdk = getAdsSdk();
-    if (!sdk) return;
-    setAdsReady(false);
+    if (!sdk) return false;
     setRewardState('loading');
     Keyboard.dismiss();
     try {
       await sdk.AdsConsent.showPrivacyOptionsForm();
       initialization = null;
       setAttempt((value) => value + 1);
+      return true;
     } catch {
       setMessage('ምርጫታት ብሕትውና ክኽፈታ ኣይከኣላን።');
       setAttempt((value) => value + 1);
+      return false;
     }
   };
 
   return {
     gold: plan === 'gold', native, plan, remaining: credits.remaining,
-    adsReady: plan === 'free' && adsReady, privacyRequired, rewardState, adUnavailable,
+    privacyRequired, rewardState, adUnavailable,
+    rewardCelebration: rewardState === 'showing' ? null : rewardCelebration, dismissRewardCelebration,
     canAsk: !native || plan === 'gold' || (plan === 'free' && (credits.remaining > 0 || adUnavailable)),
     message: questionError ?? (!adUnavailable && credits.remaining === 0 ? message : null),
     canWatch: credits.pending.length === 0, authorizeQuestion, completeQuestion, refundQuestion,

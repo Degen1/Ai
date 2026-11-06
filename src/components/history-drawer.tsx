@@ -8,7 +8,6 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type HistoryDrawerProps = {
-  adsVisible?: boolean;
   onClose: () => void;
   onDelete: (id: string) => void;
   onNewChat: () => void;
@@ -17,7 +16,7 @@ type HistoryDrawerProps = {
   width: number;
 };
 
-export function HistoryDrawer({ adsVisible = true, onClose, onDelete, onNewChat, onSelect, progress, width }: HistoryDrawerProps) {
+export function HistoryDrawer({ onClose, onDelete, onNewChat, onSelect, progress, width }: HistoryDrawerProps) {
   const insets = useSafeAreaInsets();
   const theme = useTheme();
   const drawerStyle = useAnimatedStyle(() => ({
@@ -37,12 +36,16 @@ export function HistoryDrawer({ adsVisible = true, onClose, onDelete, onNewChat,
           width,
           zIndex: 1,
           backgroundColor: theme.background,
-          paddingTop: Math.max(insets.top, Spacing.md) + Spacing.md,
           paddingBottom: insets.bottom,
         },
         drawerStyle,
       ]}>
-      <ConversationList adsVisible={adsVisible} compact onDelete={onDelete} onSelect={onSelect} />
+      <ConversationList
+        compact
+        onDelete={onDelete}
+        onSelect={onSelect}
+        topPadding={Math.max(insets.top, Spacing.md) + Spacing.md}
+      />
       <Pressable
         accessibilityLabel="ሓድሽ ዕላል ጀምር"
         accessibilityRole="button"

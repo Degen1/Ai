@@ -129,7 +129,7 @@ export const Typography = {
 } as const satisfies Record<string, TextStyle>;
 
 export const ControlSize = { touch: 44, field: 52, toolbar: 56, avatar: 64 } as const;
-export const MembershipCard = { aspectRatio: 1.586, radius: 22 } as const;
+export const MembershipCard = { aspectRatio: 1.586, radius: 22, maxWidth: 410, sideInset: Spacing.twoHalf } as const;
 
 export const FormInputStyle = {
   fontFamily: AppFontFamily,
