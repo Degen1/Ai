@@ -46,7 +46,7 @@ export default function RootLayout() {
                   contentStyle: { backgroundColor: theme.background },
                 }}>
                 <Stack.Screen name="index" />
-                <Stack.Screen name="gold" options={{ title: '', presentation: 'modal' }} />
+                <Stack.Screen name="gold" options={{ title: '', presentation: 'modal', headerShown: false, sheetGrabberVisible: false }} />
                 <Stack.Screen name="auth" options={{ title: '', presentation: 'modal', headerShown: false, sheetGrabberVisible: false }} />
                 <Stack.Screen name="privacy" options={{ title: 'ፖሊሲ ብሕትውና' }} />
                 <Stack.Screen

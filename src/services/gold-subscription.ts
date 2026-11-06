@@ -13,7 +13,8 @@ export function configureGoldSubscriptions() {
   const storeKey = Platform.OS === 'ios'
     ? process.env.EXPO_PUBLIC_REVENUECAT_APPLE_KEY
     : process.env.EXPO_PUBLIC_REVENUECAT_GOOGLE_KEY;
-  const apiKey = storeKey || (__DEV__ ? process.env.EXPO_PUBLIC_REVENUECAT_TEST_KEY : undefined);
+  // The separate Dev bundle is not a store app; use RevenueCat's simulated purchases.
+  const apiKey = __DEV__ ? process.env.EXPO_PUBLIC_REVENUECAT_TEST_KEY : storeKey;
 
   if (!apiKey) return false;
   Purchases.configure({ apiKey });

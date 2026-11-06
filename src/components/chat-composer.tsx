@@ -15,20 +15,20 @@ const maxPhotos = 4;
 const maxEncodedPhotoLength = 5_600_000;
 
 type ChatComposerProps = {
-  disabled?: boolean;
+  sendDisabled?: boolean;
   onHeightChange?: (height: number) => void;
   onSubmit: (message: string, photos: SelectedPhoto[]) => boolean;
   placeholder?: string;
 };
 
-export function ChatComposer({ disabled = false, onHeightChange, onSubmit, placeholder = 'ንሳራ ሕተት' }: ChatComposerProps) {
+export function ChatComposer({ sendDisabled = false, onHeightChange, onSubmit, placeholder = 'ንሳራ ሕተት' }: ChatComposerProps) {
   const [draft, setDraft] = useState('');
   const [photos, setPhotos] = useState<SelectedPhoto[]>([]);
   const [photoError, setPhotoError] = useState<string | null>(null);
   const inputRef = useRef<TextInput>(null);
   const colorScheme = useAppColorScheme();
   const theme = useTheme();
-  const canSend = (draft.trim().length > 0 || photos.length > 0) && !disabled;
+  const canSend = (draft.trim().length > 0 || photos.length > 0) && !sendDisabled;
 
   const submit = () => {
     if (!canSend) return;
@@ -41,7 +41,7 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
   };
 
   const addPhotos = async () => {
-    if (disabled || photos.length >= maxPhotos) return;
+    if (photos.length >= maxPhotos) return;
     Keyboard.dismiss();
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -109,7 +109,7 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
       }}>
         <SymbolButton
           accessibilityLabel="ስእሊ ወስኽ"
-          disabled={disabled || photos.length >= maxPhotos}
+          disabled={photos.length >= maxPhotos}
           name={{ ios: 'plus', android: 'add', web: 'add' }}
           onPress={() => { void addPhotos(); }}
           size={23}
@@ -120,11 +120,10 @@ export function ChatComposer({ disabled = false, onHeightChange, onSubmit, place
           autoFocus
           autoCapitalize="sentences"
           autoCorrect
-          editable={!disabled}
           maxLength={4000}
           multiline
           onChangeText={setDraft}
-          placeholder={disabled ? 'ሳራ ትሓስብ ኣላ…' : placeholder}
+          placeholder={placeholder}
           placeholderTextColor={theme.textSecondary}
           returnKeyType="default"
           selectionColor={theme.accent}

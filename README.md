@@ -6,7 +6,25 @@
 
 1. Install packages with `npm install`.
 2. Copy `.env.example` to `.env.local`. The example points native chat at the public EAS Hosting endpoint. For a local web preview, set `OPENAI_API_KEY` in `.env.local` so its same-origin `/chat` route can answer. Keep the key out of mobile public variables.
-3. Run `npx expo start` and open the app.
+3. Run `npm start` and open the installed **ሳራ Dev** development client.
+
+## Development app alongside the store app
+
+The `development` EAS profile uses **ሳራ Dev**, identifier `com.degengebre.ai.dev` on iOS and Android, the DEV-marked icon, and the `ai-dev` link scheme. Production and preview retain **ሳራ**, `com.degengebre.ai`, and `ai`.
+
+`app.config.ts` applies these overrides to the existing `app.json`. Matching development Firebase files are `GoogleService-Info.dev.plist` and `google-services.dev.json`. They register separate native apps in the existing Firebase project: accounts and hosted services are shared, while on-device chat history and settings belong to each installed app.
+
+`npm start`, `npm run ios`, and `npm run android` select the development identity for Metro. AdMob uses live units in all builds by default; set `EXPO_PUBLIC_ADMOB_TEST_ADS=true` in `.env.local` and restart Metro to use test units when testing ad interactions. Development clients use `EXPO_PUBLIC_REVENUECAT_TEST_KEY` for simulated purchases. Release builds use their platform store key. The EAS development environment has the public chat/report endpoints and Test Store key configured.
+
+One new native development build must be installed before both apps can coexist. Build only when explicitly approved:
+
+```bash
+npx eas-cli@latest build --platform ios --profile development
+# Or Android:
+npx eas-cli@latest build --platform android --profile development
+```
+
+The iOS development profile uses internal distribution; EAS will need the phone registered for signing. Install its development build link alongside the App Store app, then connect it to `npm start`. This setup does not start a build or submit a store release.
 
 For local backend development, set `OPENAI_API_KEY` in `.env.local`, run `npm run chat-server`, and override `EXPO_PUBLIC_CHAT_API_URL`. An iOS simulator or local web preview can use `http://localhost:8787`; an Android emulator can use `http://10.0.2.2:8787`. A physical phone needs the computer's LAN address and `CHAT_SERVER_HOST=0.0.0.0`. Reload Expo after changing the URL.
 

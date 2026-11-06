@@ -1,7 +1,6 @@
 import { ScrollView, View } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
-import { PRIVACY_SECTIONS, SUPPORT_EMAIL } from '@/constants/privacy-policy';
+import { PrivacyPolicyContent } from '@/components/privacy-policy-content';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 
 export default function PrivacyScreen() {
@@ -10,14 +9,7 @@ export default function PrivacyScreen() {
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingHorizontal: Spacing.md, paddingTop: Spacing.lg, paddingBottom: Spacing.xxl, alignItems: 'center' }}>
       <View style={{ width: '100%', maxWidth: MaxContentWidth, gap: Spacing.lg }}>
-        <ThemedText type="body" selectable>እዚ ፖሊሲ ሳራ ሓበሬታኻ ብኸመይ ከም እትጥቀመሉ ይገልጽ።</ThemedText>
-        {PRIVACY_SECTIONS.map((section) => (
-          <View key={section.title} style={{ gap: Spacing.sm }}>
-            <ThemedText type="headline">{section.title}</ThemedText>
-            <ThemedText type="body" selectable>{section.body}</ThemedText>
-          </View>
-        ))}
-        <ThemedText type="caption" themeColor="textSecondary">{SUPPORT_EMAIL}</ThemedText>
+        <PrivacyPolicyContent />
       </View>
     </ScrollView>
   );

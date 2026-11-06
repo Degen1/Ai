@@ -23,7 +23,7 @@ export const PRIVACY_SECTIONS = [
   },
   {
     title: 'ኣገልግሎታትን ርክብን',
-    body: 'ሳራ Expo EAS Hosting፣ OpenAI፣ Firebase Authentication፣ Firebase Hosting፣ RevenueCat፣ Apple App Storeን Google Playን ትጥቀም። ንነጻ ተጠቀምቲ Google AdMob ማስታወቂያታት የቕርብ። ማስታወቂያ ብምርኣይ 2 ተወሰኽቲ ሕቶታት ክትረክብ ትኽእል። ጎልድ ማስታወቂያ የብሉን፡ ሕቶታት ድማ ዘይተወሰኑ እዮም። Google ኣድራሻ IP፣ መለለዪ መሳርሒን ኣጠቓቕማ ማስታወቂያን ክእክብ ይኽእል። ትሕዝቶ ዕላልካ ንማስታወቂያ ኣይንሰዶን። ብዝሒ ዝተረፉ ሕቶታትካ ኣብ መሳርሒኻ ይዕቀብ። ኣብ ዝምልከተሉ ዞባ፡ ምርጫታት ብሕትውና ማስታወቂያ ኣብ መገለጺኻ ክትቅይር ትኽእል። ብዛዕባ ሓበሬታኻ ንምሕታት ናብ degenlogistics@gmail.com ጽሓፍ።',
+    body: 'ሳራ Expo EAS Hosting፣ OpenAI፣ Firebase Authentication፣ Firebase Hosting፣ RevenueCat፣ Apple App Storeን Google Playን ትጥቀም። ንነጻ ተጠቀምቲ Google AdMob ማስታወቂያታት የቕርብ። ማስታወቂያ ብምርኣይ 2 ተወሰኽቲ ሕቶታት ክትረክብ ትኽእል። ጎልድ ማስታወቂያ የብሉን፡ ሕቶታት ድማ ዘይተወሰኑ እዮም። Google ኣድራሻ IP፣ መለለዪ መሳርሒን ኣጠቓቕማ ማስታወቂያን ክእክብ ይኽእል። ትሕዝቶ ዕላልካ ንማስታወቂያ ኣይንሰዶን። ብዝሒ ዝተረፉ ሕቶታትካ ኣብ መሳርሒኻ ይዕቀብ። ኣብ ዝምልከተሉ ዞባ፡ ምርጫታት ብሕትውና ማስታወቂያ ኣብ ኣባልነት → ቅጥዕታት → ሓፈሻዊ ክትቅይር ትኽእል። ብዛዕባ ሓበሬታኻ ንምሕታት ናብ degenlogistics@gmail.com ጽሓፍ።',
   },
 ] as const;
 
@@ -50,6 +50,6 @@ export const PRIVACY_SECTIONS_EN = [
   },
   {
     title: 'Services and contact',
-    body: 'Sara uses Expo EAS Hosting for its chat service, OpenAI for AI replies, Firebase Authentication for optional accounts, RevenueCat for subscription access, Firebase Hosting for public support and policy pages, and Apple App Store or Google Play for store payments. Google AdMob provides banner and optional rewarded ads for free users. Completing a rewarded ad unlocks two more questions; Sara Gold has no ads and unlimited questions. The SDK may process IP address, device identifiers, diagnostics, and ad interactions. We request non-personalized ads and do not send chat content to AdMob. Question credits are stored locally on this installation. Where required, you can revisit ad privacy choices from your profile. These providers may process information under their own privacy terms. We do not sell your chat content. For privacy questions or requests, email degenlogistics@gmail.com. You can delete your account in profile settings.',
+    body: 'Sara uses Expo EAS Hosting for its chat service, OpenAI for AI replies, Firebase Authentication for optional accounts, RevenueCat for subscription access, Firebase Hosting for public support and policy pages, and Apple App Store or Google Play for store payments. Google AdMob provides optional rewarded ads for free users. Completing a rewarded ad unlocks two more questions; Sara Gold has no ads and unlimited questions. The SDK may process IP address, device identifiers, diagnostics, and ad interactions. We request non-personalized ads and do not send chat content to AdMob. Question credits are stored locally on this installation. Where required, you can revisit ad privacy choices under Membership → Settings → General. These providers may process information under their own privacy terms. We do not sell your chat content. For privacy questions or requests, email degenlogistics@gmail.com. You can delete your account under Membership → Settings → Account.',
   },
 ] as const;

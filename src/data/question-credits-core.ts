@@ -1,5 +1,6 @@
 type Storage = { read: () => string | null; write: (value: string) => void };
 type Credits = { remaining: number; pending: string[]; completed: string[]; rewards: string[] };
+export const REWARDED_QUESTION_COUNT = 2;
 const initial = (): Credits => ({ remaining: 2, pending: [], completed: [], rewards: [] });
 
 // Local allowance is shared across chats and sign-ins on this installation.
@@ -42,8 +43,9 @@ export function createQuestionCredits(storage: Storage) {
       save({ ...state, remaining: state.remaining + 1, pending: state.pending.filter((item) => item !== id) });
     },
     reward(id: string) {
-      if (state.rewards.includes(id)) return;
-      save({ ...state, remaining: state.remaining + 2, rewards: [...state.rewards, id].slice(-64) });
+      if (state.rewards.includes(id)) return 0;
+      save({ ...state, remaining: state.remaining + REWARDED_QUESTION_COUNT, rewards: [...state.rewards, id].slice(-64) });
+      return REWARDED_QUESTION_COUNT;
     },
     grantAdFallback(id: string) {
       // Grant only when the previous batch is fully used. Background failures

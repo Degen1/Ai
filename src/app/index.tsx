@@ -25,6 +25,7 @@ import { HistoryDrawer } from '@/components/history-drawer';
 import { MessageRow } from '@/components/message-row';
 import { ProfileButton } from '@/components/profile-avatar';
 import { ProfileDrawer } from '@/components/profile-drawer';
+import { QuestionRewardCelebration } from '@/components/question-reward-celebration';
 import { SymbolButton } from '@/components/symbol-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThinkingIndicator } from '@/components/thinking-indicator';
@@ -314,7 +315,6 @@ export default function ChatScreen() {
       <View style={{ flex: 1, backgroundColor: theme.background, overflow: 'hidden' }}>
         {activeDrawer === 'history' ? (
           <HistoryDrawer
-            adsVisible={drawerOpen}
             onClose={closeDrawer}
             onDelete={onDeleteConversation}
             onNewChat={startNewChat}
@@ -324,7 +324,7 @@ export default function ChatScreen() {
           />
         ) : null}
         {activeDrawer === 'profile' ? (
-          <ProfileDrawer adsVisible={drawerOpen} onClose={closeDrawer} progress={drawerPosition} width={drawerWidth} />
+          <ProfileDrawer onClose={closeDrawer} progress={drawerPosition} width={drawerWidth} />
         ) : null}
         <Animated.View
           style={[
@@ -345,6 +345,7 @@ export default function ChatScreen() {
               options={{
                 title: mode === 'chat' ? 'ዕላል ምስ ሳራ' : 'ስራሕ ምስ ሳራ',
                 headerShown: false,
+                scrollEdgeEffects: { top: 'hidden' },
               }}
             />
 
@@ -477,10 +478,17 @@ export default function ChatScreen() {
 
               <View pointerEvents="none" style={{ flex: 1 }} />
               <Animated.View style={[composerInsetsStyle, { zIndex: 1 }]}>
+                {ads.rewardCelebration ? (
+                  <QuestionRewardCelebration
+                    key={ads.rewardCelebration.id}
+                    reward={ads.rewardCelebration}
+                    onDismiss={ads.dismissRewardCelebration}
+                  />
+                ) : null}
                 <View onLayout={({ nativeEvent }) => setComposerHeight(nativeEvent.layout.height)}>
                   <QuestionAllowance thinking={isThinking} />
                   <ChatComposer
-                    disabled={isThinking}
+                    sendDisabled={isThinking}
                     onSubmit={sendMessage}
                     placeholder={mode === 'chat' ? 'ንሳራ ሕተት' : 'ምስ ሳራ ስራሕ'}
                   />

@@ -4,11 +4,14 @@ import { SymbolView } from 'expo-symbols';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, useWindowDimensions, View } from 'react-native';
 import type { PurchasesPackage } from 'react-native-purchases';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { AccountSettingsModal } from '@/components/account-settings-modal';
 import { ProfileAvatar } from '@/components/profile-avatar';
+import { SymbolButton } from '@/components/symbol-button';
 import { ThemedText } from '@/components/themed-text';
 import { TERMS_OF_USE_URL } from '@/constants/legal';
-import { ControlSize, MembershipCard, ProfileCardMaxWidth, Radius, Spacing, Typography } from '@/constants/theme';
+import { ControlSize, MembershipCard, Radius, Spacing, Typography } from '@/constants/theme';
 import { useAccountProfile } from '@/data/profile-settings';
 import { useAuthSession } from '@/hooks/use-auth-session';
 import { useTheme } from '@/hooks/use-theme';
@@ -20,10 +23,13 @@ type Period = 'monthly' | 'annual';
 
 export default function GoldScreen() {
   const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { user } = useAuthSession();
   const { displayName } = useAccountProfile(user?.uid ?? null);
   const { width, fontScale } = useWindowDimensions();
-  const cardWidth = Math.min(width - Spacing.md * 2, ProfileCardMaxWidth);
+  const [sheetWidth, setSheetWidth] = useState<number | null>(null);
+  const cardInset = Math.max(MembershipCard.sideInset, insets.left, insets.right);
+  const cardWidth = Math.min((sheetWidth ?? width) - cardInset * 2, MembershipCard.maxWidth);
   const cardHeight = Math.max(
     cardWidth / MembershipCard.aspectRatio,
     Spacing.threeHalf * 2 + ControlSize.avatar + Spacing.sm + Typography.headline.lineHeight + Spacing.md + ControlSize.touch,
@@ -33,6 +39,7 @@ export default function GoldScreen() {
   const [planStatus, setPlanStatus] = useState<PlanStatus>('loading');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const mounted = useRef(false);
 
@@ -61,10 +68,13 @@ export default function GoldScreen() {
   }, []);
 
   useEffect(() => {
+    let current = true;
     mounted.current = true;
-    load(() => mounted.current);
-    return () => { mounted.current = false; };
-  }, [load]);
+    void Promise.resolve().then(() => {
+      if (current) load(() => current);
+    });
+    return () => { current = false; mounted.current = false; };
+  }, [load, user?.uid]);
 
   const purchase = async (period: Period) => {
     if (!options || busy) return;
@@ -105,16 +115,38 @@ export default function GoldScreen() {
     Math.abs(options.annual.product.price - options.monthly.product.price * 10) < 0.01;
 
   return (
+    <>
     <ScrollView
+      onLayout={({ nativeEvent }) => setSheetWidth(nativeEvent.layout.width)}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{
-        paddingHorizontal: Spacing.md,
-        paddingTop: Spacing.md,
-        paddingBottom: Spacing.xxl,
+        paddingHorizontal: cardInset,
+        paddingTop: Math.max(insets.top, Spacing.md),
+        paddingBottom: Math.max(insets.bottom, Spacing.xxl),
         gap: Spacing.md,
         flexGrow: 1,
         alignItems: 'center',
       }}>
+      <View style={{ width: cardWidth, flexDirection: 'row', justifyContent: 'space-between' }}>
+        <SymbolButton
+          accessibilityLabel="ኣባልነት ዕጸው"
+          disabled={busy}
+          glass
+          name={{ ios: 'xmark', android: 'close', web: 'close' }}
+          onPress={() => {
+            if (router.canGoBack()) router.back();
+            else router.replace('/');
+          }}
+        />
+        <SymbolButton
+          accessibilityLabel="ቅጥዕታት ክፈት"
+          disabled={busy}
+          glass
+          name={{ ios: 'gearshape', android: 'settings', web: 'settings' }}
+          onPress={() => setSettingsOpen(true)}
+          size={22}
+        />
+      </View>
       <View style={{
         width: cardWidth,
         minHeight: cardHeight,
@@ -224,5 +256,7 @@ export default function GoldScreen() {
         </Pressable>
       </View>
     </ScrollView>
+    {settingsOpen ? <AccountSettingsModal onClose={() => setSettingsOpen(false)} /> : null}
+    </>
   );
 }
